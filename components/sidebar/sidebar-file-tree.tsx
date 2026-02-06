@@ -29,7 +29,7 @@ export function SidebarFileTree() {
   return (
     <SidebarContent>
       <ScrollArea className="h-full">
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel>
             Files
             <DropdownMenu>
