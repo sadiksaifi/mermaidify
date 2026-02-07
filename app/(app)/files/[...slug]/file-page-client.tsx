@@ -6,13 +6,14 @@ import {
   useFileContentQuery,
   useSaveFileContentMutation,
 } from "@/features/items/query";
-import { MermaidEditor } from "@/components/editor/mermaid-editor";
+import { EditorPlayground } from "@/components/editor/editor-playground";
 
 interface FilePageClientProps {
   itemId: string;
+  splitDirection: "horizontal" | "vertical";
 }
 
-export function FilePageClient({ itemId }: FilePageClientProps) {
+export function FilePageClient({ itemId, splitDirection }: FilePageClientProps) {
   const { setSelectedId, expandTo } = useFileTree();
   const { data, isLoading } = useFileContentQuery(itemId);
   const { mutate: saveContent } = useSaveFileContentMutation();
@@ -42,10 +43,11 @@ export function FilePageClient({ itemId }: FilePageClientProps) {
   }
 
   return (
-    <MermaidEditor
+    <EditorPlayground
       key={itemId}
       defaultValue={data?.content ?? ""}
       onChange={handleChange}
+      splitDirection={splitDirection}
     />
   );
 }

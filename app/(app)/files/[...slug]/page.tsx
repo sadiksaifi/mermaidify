@@ -13,6 +13,15 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { LayoutLeftIcon, LayoutTopIcon } from "@hugeicons/core-free-icons";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { FilePageClient } from "./file-page-client";
 
 interface FilePageProps {
@@ -22,6 +31,9 @@ interface FilePageProps {
 export default function FilePage({ params }: FilePageProps) {
   const { slug } = use(params);
   const { items, isLoading } = useFileTreeContext();
+  const [splitDirection, setSplitDirection] = useLocalStorage<
+    "horizontal" | "vertical"
+  >("mermaid-viewer:split-direction", "horizontal");
 
   if (isLoading) {
     return (
@@ -90,9 +102,38 @@ export default function FilePage({ params }: FilePageProps) {
             ))}
           </BreadcrumbList>
         </Breadcrumb>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="ml-auto"
+                onClick={() =>
+                  setSplitDirection((d) =>
+                    d === "horizontal" ? "vertical" : "horizontal",
+                  )
+                }
+              />
+            }
+          >
+            <HugeiconsIcon
+              icon={
+                splitDirection === "horizontal"
+                  ? LayoutLeftIcon
+                  : LayoutTopIcon
+              }
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            {splitDirection === "horizontal"
+              ? "Switch to vertical split"
+              : "Switch to horizontal split"}
+          </TooltipContent>
+        </Tooltip>
       </header>
       <div className="flex-1 overflow-hidden">
-        <FilePageClient itemId={item.id} />
+        <FilePageClient itemId={item.id} splitDirection={splitDirection} />
       </div>
     </>
   );
