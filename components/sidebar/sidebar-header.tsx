@@ -17,7 +17,7 @@ export function SidebarHeaderSection() {
       <SidebarMenu>
         {/* Brand / Logo */}
         <SidebarMenuItem>
-          <SidebarMenuButton size="lg" render={<Link href="/" />}>
+          <SidebarMenuButton size="lg" render={<Link href="/" />} className="hover:bg-transparent active:bg-transparent">
             <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
               <span className="text-sm font-bold">M</span>
             </div>

@@ -13,7 +13,7 @@ export function AppSidebar() {
   const { data: user } = useAuth();
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="offcanvas" variant="sidebar">
       <SidebarHeaderSection />
       <SidebarFileTree />
       <SidebarFooterSection user={user ?? null} />
