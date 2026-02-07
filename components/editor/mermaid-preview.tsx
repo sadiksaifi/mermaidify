@@ -6,14 +6,17 @@ interface GestureEvent extends UIEvent {
   rotation: number;
 }
 
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ZoomInAreaIcon,
   ZoomOutAreaIcon,
   SearchAreaIcon,
+  ArrowExpandDiagonal01Icon,
+  ArrowShrink01Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface MermaidPreviewProps {
   svg: string | null;
@@ -22,6 +25,7 @@ interface MermaidPreviewProps {
 
 export function MermaidPreview({ svg, error }: MermaidPreviewProps) {
   const containerNodeRef = useRef<HTMLDivElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -164,6 +168,16 @@ export function MermaidPreview({ svg, error }: MermaidPreviewProps) {
     setTransform({ x: 0, y: 0, scale: 1 });
   }, []);
 
+  // Exit fullscreen on Escape
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen]);
+
   // Pre-process SVG: extract intrinsic dimensions and make it responsive
   // so we can size it via CSS width/height instead of CSS scale() — keeps
   // the SVG rendering as a vector at any zoom level (no rasterization blur).
@@ -214,7 +228,12 @@ export function MermaidPreview({ svg, error }: MermaidPreviewProps) {
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full overflow-hidden select-none"
+      className={cn(
+        "overflow-hidden select-none",
+        isFullscreen
+          ? "fixed inset-0 z-50 bg-background"
+          : "relative h-full w-full",
+      )}
       style={{ cursor: isDragging ? "grabbing" : "grab", touchAction: "none" }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -260,6 +279,16 @@ export function MermaidPreview({ svg, error }: MermaidPreviewProps) {
         </Button>
         <Button variant="ghost" size="icon-xs" onClick={handleFitToView}>
           <HugeiconsIcon icon={SearchAreaIcon} className="size-3.5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={() => setIsFullscreen((f) => !f)}
+        >
+          <HugeiconsIcon
+            icon={isFullscreen ? ArrowShrink01Icon : ArrowExpandDiagonal01Icon}
+            className="size-3.5"
+          />
         </Button>
       </div>
     </div>
