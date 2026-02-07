@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Settings01Icon,
@@ -22,14 +23,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { signOut } from "@/lib/auth/actions";
 
-export function SidebarFooterSection() {
-  // Mock user data
-  const user = {
-    name: "John Doe",
-    email: "john@example.com",
-    avatar: "",
-  };
+type UserData = {
+  name: string;
+  email: string;
+  avatar: string;
+} | null;
+
+export function SidebarFooterSection({ user }: { user: UserData }) {
+  const [isPending, startTransition] = useTransition();
+
+  if (!user) return null;
+
+  const initials = user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("");
 
   return (
     <SidebarFooterPrimitive>
@@ -44,12 +54,7 @@ export function SidebarFooterSection() {
                 >
                   <Avatar size="sm">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>
-                      {user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
+                    <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{user.name}</span>
@@ -74,12 +79,7 @@ export function SidebarFooterSection() {
               <div className="flex items-center gap-2 px-3 py-2.5 text-sm">
                 <Avatar size="sm">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback>
-                    {user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>
@@ -99,9 +99,12 @@ export function SidebarFooterSection() {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={isPending}
+                onClick={() => startTransition(() => signOut())}
+              >
                 <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
-                <span>Log out</span>
+                <span>{isPending ? "Logging out..." : "Log out"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
