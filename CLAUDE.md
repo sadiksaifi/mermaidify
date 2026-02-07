@@ -64,6 +64,7 @@ When writing code in this project, AI agents should use the following skills:
 - **frontend-design** - Use when creating or modifying UI components, layouts, and visual elements
 - **vercel-react-best-practices** - Use when writing React components, hooks, or any React-related code
 - **web-design-guidelines** - Use when implementing designs, reviewing UI code, or making accessibility decisions
+- **supabase-postgres-best-practices** - Use when working with postgres databases
 
 These skills should be invoked whenever working on:
 - React components or pages
