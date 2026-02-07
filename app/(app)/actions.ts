@@ -10,6 +10,11 @@ const uuidSchema = z.string().uuid();
 const nameSchema = z.string().trim().min(1).max(255);
 const contentSchema = z.string().max(1_000_000); // 1MB text limit
 
+/** Strip any .mmd suffix, then add it back — guarantees exactly one .mmd */
+function ensureMmdExtension(name: string): string {
+  return name.replace(/\.mmd$/i, "") + ".mmd";
+}
+
 async function getAuthenticatedUserId(): Promise<string> {
   const supabase = await createClient();
   const {
@@ -49,13 +54,14 @@ export async function createItem(
 ) {
   const input = createItemSchema.parse({ parentId, name, isFolder });
   const userId = await getAuthenticatedUserId();
+  const finalName = input.isFolder ? input.name : ensureMmdExtension(input.name);
 
   const [newItem] = await db
     .insert(items)
     .values({
       userId,
       parentId: input.parentId,
-      name: input.name,
+      name: finalName,
       isFolder: input.isFolder,
     })
     .returning({
@@ -84,9 +90,20 @@ export async function renameItem(itemId: string, newName: string) {
   const input = renameItemSchema.parse({ itemId, newName });
   const userId = await getAuthenticatedUserId();
 
+  // Look up whether item is a file to enforce .mmd extension
+  const [item] = await db
+    .select({ isFolder: items.isFolder })
+    .from(items)
+    .where(and(eq(items.id, input.itemId), eq(items.userId, userId)))
+    .limit(1);
+
+  if (!item) throw new Error("Item not found");
+
+  const finalName = item.isFolder ? input.newName : ensureMmdExtension(input.newName);
+
   await db
     .update(items)
-    .set({ name: input.newName, updatedAt: new Date() })
+    .set({ name: finalName, updatedAt: new Date() })
     .where(and(eq(items.id, input.itemId), eq(items.userId, userId)));
 }
 

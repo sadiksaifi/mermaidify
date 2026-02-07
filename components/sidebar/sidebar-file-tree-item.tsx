@@ -42,7 +42,9 @@ function RenameInput({
   item: FileTreeItem;
   onFinish: (name: string) => void;
 }) {
-  const [value, setValue] = React.useState(item.name);
+  const isFile = item.type === "file";
+  const stem = isFile ? item.name.replace(/\.mmd$/, "") : item.name;
+  const [value, setValue] = React.useState(stem);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -52,10 +54,11 @@ function RenameInput({
 
   const handleSubmit = () => {
     const trimmed = value.trim();
-    if (trimmed && trimmed !== item.name) {
-      onFinish(trimmed);
+    const fullName = isFile ? `${trimmed}.mmd` : trimmed;
+    if (trimmed && fullName !== item.name) {
+      onFinish(fullName);
     } else {
-      onFinish(item.name); // Keep original if empty or unchanged
+      onFinish(item.name);
     }
   };
 
@@ -69,16 +72,21 @@ function RenameInput({
   };
 
   return (
-    <input
-      ref={inputRef}
-      type="text"
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={handleSubmit}
-      onKeyDown={handleKeyDown}
-      className="flex-1 bg-transparent text-sm outline-none border-b border-sidebar-ring px-1"
-      onClick={(e) => e.stopPropagation()}
-    />
+    <span className="flex flex-1 items-baseline min-w-0">
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSubmit}
+        onKeyDown={handleKeyDown}
+        className="min-w-0 flex-1 bg-transparent text-sm outline-none border-b border-sidebar-ring px-1"
+        onClick={(e) => e.stopPropagation()}
+      />
+      {isFile && (
+        <span className="text-sm text-muted-foreground shrink-0">.mmd</span>
+      )}
+    </span>
   );
 }
 
