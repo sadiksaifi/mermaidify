@@ -1,43 +1,42 @@
 "use client";
 
-import { useFileTreeContext } from "@/contexts/file-tree-context";
+import { useFileTreeStore } from "@/contexts/file-tree-context";
 import {
   findItemById,
   getItemUrlPath,
 } from "@/lib/file-tree-utils";
-import type { FileTreeItem } from "@/lib/types";
 import { useMemo } from "react";
 
 export function useFileTree() {
-  const context = useFileTreeContext();
+  const store = useFileTreeStore((s) => s);
 
   const helpers = useMemo(
     () => ({
-      findById: (id: string): FileTreeItem | null => {
-        return findItemById(context.items, id);
+      findById: (id: string) => {
+        return findItemById(store.items, id);
       },
 
-      getUrlPath: (itemId: string): string | null => {
-        return getItemUrlPath(context.items, itemId);
+      getUrlPath: (itemId: string) => {
+        return getItemUrlPath(store.items, itemId);
       },
 
-      isExpanded: (id: string): boolean => {
-        return context.expandedIds.has(id);
+      isExpanded: (id: string) => {
+        return store.expandedIds.has(id);
       },
 
-      isSelected: (id: string): boolean => {
-        return context.selectedId === id;
+      isSelected: (id: string) => {
+        return store.selectedId === id;
       },
 
-      isRenaming: (id: string): boolean => {
-        return context.renamingId === id;
+      isRenaming: (id: string) => {
+        return store.renamingId === id;
       },
     }),
-    [context.items, context.expandedIds, context.selectedId, context.renamingId]
+    [store.items, store.expandedIds, store.selectedId, store.renamingId]
   );
 
   return {
-    ...context,
+    ...store,
     ...helpers,
   };
 }

@@ -15,7 +15,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { useFileTree } from "@/hooks/use-file-tree";
+import { useFileTreeStore } from "@/contexts/file-tree-context";
 import type { FileTreeItem } from "@/lib/types";
 
 interface FileTreeContextMenuProps {
@@ -24,7 +24,11 @@ interface FileTreeContextMenuProps {
 }
 
 export function FileTreeContextMenu({ item, children }: FileTreeContextMenuProps) {
-  const { startRenaming, deleteItem, createFile, createFolder } = useFileTree();
+  // Action-only subscriptions — stable refs, no re-renders from state changes
+  const startRenaming = useFileTreeStore((s) => s.startRenaming);
+  const deleteItem = useFileTreeStore((s) => s.deleteItem);
+  const createFile = useFileTreeStore((s) => s.createFile);
+  const createFolder = useFileTreeStore((s) => s.createFolder);
 
   const handleRename = () => {
     startRenaming(item.id);

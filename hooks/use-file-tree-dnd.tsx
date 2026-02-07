@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useStore } from "zustand";
 import {
   DndContext,
   DragEndEvent,
@@ -11,25 +12,33 @@ import {
   useSensor,
   useSensors,
   closestCenter,
-  UniqueIdentifier,
 } from "@dnd-kit/core";
-import { useFileTree } from "@/hooks/use-file-tree";
-import type { FileTreeItem } from "@/lib/types";
+import { useFileTreeStore } from "@/contexts/file-tree-context";
+import {
+  createFileTreeDndStore,
+  type FileTreeDndStoreState,
+} from "@/stores/file-tree-dnd-store";
+import type { StoreApi } from "zustand";
+import { findItemById } from "@/lib/file-tree-utils";
 
 interface FileTreeDndProviderProps {
   children: React.ReactNode;
 }
 
-export function FileTreeDndProvider({ children }: FileTreeDndProviderProps) {
-  const { moveItem, findById } = useFileTree();
-  const [mounted, setMounted] = React.useState(false);
-  const [activeId, setActiveId] = React.useState<UniqueIdentifier | null>(null);
-  const [overId, setOverId] = React.useState<UniqueIdentifier | null>(null);
+const FileTreeDndStoreContext = React.createContext<StoreApi<FileTreeDndStoreState> | null>(null);
 
-  // Only enable DnD after hydration to avoid mismatched aria-describedby IDs
+export function FileTreeDndProvider({ children }: FileTreeDndProviderProps) {
+  const moveItem = useFileTreeStore((s) => s.moveItem);
+  const items = useFileTreeStore((s) => s.items);
+
+  const [store] = React.useState(createFileTreeDndStore);
+
+  const [mounted, setMounted] = React.useState(false);
+
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    store.getState().setDndEnabled(true);
+  }, [store]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -39,24 +48,23 @@ export function FileTreeDndProvider({ children }: FileTreeDndProviderProps) {
     })
   );
 
-  const activeItem = activeId ? findById(String(activeId)) : null;
-
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id);
+    const state = store.getState();
+    state.setActiveId(event.active.id);
+    const item = findItemById(items, String(event.active.id));
+    state.setActiveItem(item);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    setOverId(event.over?.id ?? null);
+    store.getState().setOverId(event.over?.id ?? null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const targetItem = findById(String(over.id));
+      const targetItem = findItemById(items, String(over.id));
 
-      // If dropping on a folder, move into it
-      // If dropping on a file, move to its parent
       if (targetItem) {
         const newParentId =
           targetItem.type === "folder" ? targetItem.id : targetItem.parentId;
@@ -64,61 +72,54 @@ export function FileTreeDndProvider({ children }: FileTreeDndProviderProps) {
       }
     }
 
-    setActiveId(null);
-    setOverId(null);
+    store.getState().reset();
   };
 
   const handleDragCancel = () => {
-    setActiveId(null);
-    setOverId(null);
+    store.getState().reset();
   };
 
-  // Before hydration, render children without DnD to avoid hydration mismatch
   if (!mounted) {
     return (
-      <FileTreeDndContext.Provider value={{ activeId: null, overId: null, activeItem: null, isDndEnabled: false }}>
+      <FileTreeDndStoreContext.Provider value={store}>
         {children}
-      </FileTreeDndContext.Provider>
+      </FileTreeDndStoreContext.Provider>
     );
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      <FileTreeDndContext.Provider value={{ activeId, overId, activeItem, isDndEnabled: true }}>
+    <FileTreeDndStoreContext.Provider value={store}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
         {children}
-      </FileTreeDndContext.Provider>
-      <DragOverlay dropAnimation={null}>
-        {activeItem ? (
-          <div className="bg-sidebar-accent text-sidebar-accent-foreground rounded-lg px-3 py-2 text-sm shadow-lg opacity-80">
-            {activeItem.name}
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay dropAnimation={null}>
+          <DragOverlayContent />
+        </DragOverlay>
+      </DndContext>
+    </FileTreeDndStoreContext.Provider>
   );
 }
 
-interface FileTreeDndContextValue {
-  activeId: UniqueIdentifier | null;
-  overId: UniqueIdentifier | null;
-  activeItem: FileTreeItem | null;
-  isDndEnabled: boolean;
+function DragOverlayContent() {
+  const activeItem = useFileTreeDnd((s) => s.activeItem);
+  if (!activeItem) return null;
+  return (
+    <div className="bg-sidebar-accent text-sidebar-accent-foreground rounded-lg px-3 py-2 text-sm shadow-lg opacity-80">
+      {activeItem.name}
+    </div>
+  );
 }
 
-const FileTreeDndContext = React.createContext<FileTreeDndContextValue>({
-  activeId: null,
-  overId: null,
-  activeItem: null,
-  isDndEnabled: false,
-});
-
-export function useFileTreeDnd() {
-  return React.useContext(FileTreeDndContext);
+export function useFileTreeDnd<T>(selector: (state: FileTreeDndStoreState) => T): T {
+  const store = React.useContext(FileTreeDndStoreContext);
+  if (!store) {
+    throw new Error("useFileTreeDnd must be used within a FileTreeDndProvider");
+  }
+  return useStore(store, selector);
 }

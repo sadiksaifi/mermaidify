@@ -25,8 +25,9 @@ import {
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { FileTreeContextMenu } from "./file-tree-context-menu";
-import { useFileTree } from "@/hooks/use-file-tree";
+import { useFileTreeStore } from "@/contexts/file-tree-context";
 import { useFileTreeDnd } from "@/hooks/use-file-tree-dnd";
+import { getItemUrlPath } from "@/lib/file-tree-utils";
 import { cn } from "@/lib/utils";
 import type { FileTreeItem } from "@/lib/types";
 
@@ -99,13 +100,12 @@ function DraggableWrapper({
   children: React.ReactNode;
   className?: string;
 }) {
-  const { isDndEnabled } = useFileTreeDnd();
+  const isDndEnabled = useFileTreeDnd((s) => s.isDndEnabled);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id,
     disabled: !isDndEnabled,
   });
 
-  // Only apply drag attributes when DnD is enabled (after hydration)
   if (!isDndEnabled) {
     return <div className={className}>{children}</div>;
   }
@@ -131,16 +131,15 @@ function DroppableWrapper({
   children: React.ReactNode;
   isFolder: boolean;
 }) {
-  const { activeId, isDndEnabled } = useFileTreeDnd();
+  const activeId = useFileTreeDnd((s) => s.activeId);
+  const isDndEnabled = useFileTreeDnd((s) => s.isDndEnabled);
   const { setNodeRef, isOver } = useDroppable({
     id,
     disabled: !isDndEnabled,
   });
 
-  // Only show drop indicator when dragging and hovering
   const showDropIndicator = isOver && activeId && activeId !== id;
 
-  // Before hydration, render without drop zone refs
   if (!isDndEnabled) {
     return <div className="relative">{children}</div>;
   }
@@ -160,22 +159,21 @@ function DroppableWrapper({
 }
 
 export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProps) {
-  const {
-    isExpanded,
-    isSelected,
-    isRenaming,
-    toggleExpanded,
-    setSelectedId,
-    finishRenaming,
-    cancelRenaming,
-    getUrlPath,
-  } = useFileTree();
-  const { activeId } = useFileTreeDnd();
+  // Granular selectors — only re-render when this item's state changes
+  const expanded = useFileTreeStore((s) => s.expandedIds.has(item.id));
+  const selected = useFileTreeStore((s) => s.selectedId === item.id);
+  const renaming = useFileTreeStore((s) => s.renamingId === item.id);
+  const items = useFileTreeStore((s) => s.items);
+
+  // Actions are stable references — subscribing doesn't cause re-renders
+  const toggleExpanded = useFileTreeStore((s) => s.toggleExpanded);
+  const setSelectedId = useFileTreeStore((s) => s.setSelectedId);
+  const finishRenaming = useFileTreeStore((s) => s.finishRenaming);
+  const cancelRenaming = useFileTreeStore((s) => s.cancelRenaming);
+
+  const activeId = useFileTreeDnd((s) => s.activeId);
 
   const router = useRouter();
-  const expanded = isExpanded(item.id);
-  const selected = isSelected(item.id);
-  const renaming = isRenaming(item.id);
   const isFolder = item.type === "folder";
   const hasChildren = isFolder && item.children && item.children.length > 0;
   const isDragging = activeId === item.id;
@@ -190,7 +188,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
 
   const handleFileClick = () => {
     setSelectedId(item.id);
-    const urlPath = getUrlPath(item.id);
+    const urlPath = getItemUrlPath(items, item.id);
     if (urlPath) {
       router.push(urlPath);
     }
@@ -257,7 +255,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
     }
 
     // Root level file
-    const urlPath = getUrlPath(item.id);
+    const urlPath = getItemUrlPath(items, item.id);
     return (
       <SidebarMenuItem>
         <DroppableWrapper id={item.id} isFolder={false}>
@@ -337,7 +335,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
   }
 
   // Nested file
-  const urlPath = getUrlPath(item.id);
+  const urlPath = getItemUrlPath(items, item.id);
   return (
     <SidebarMenuSubItem>
       <DroppableWrapper id={item.id} isFolder={false}>
