@@ -3,7 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IconChevronRight, IconFile, IconFolder, IconFolderOpen } from "@tabler/icons-react";
+import { IconChevronRight, IconFolder, IconFolderOpen } from "@tabler/icons-react";
+import { MermaidIcon } from "@/components/icons/mermaid-icon";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 import {
@@ -254,7 +255,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                 render={urlPath ? <Link href={urlPath} /> : undefined}
                 onClick={handleFileClick}
               >
-                <IconFile className="size-4 shrink-0" />
+                <MermaidIcon className="size-4 shrink-0" />
                 {renaming ? (
                   <RenameInput item={item} onFinish={handleFinishRename} />
                 ) : (
@@ -328,7 +329,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
               render={urlPath ? <Link href={urlPath} /> : undefined}
               onClick={handleFileClick}
             >
-              <IconFile className="size-3.5 shrink-0" />
+              <MermaidIcon className="size-3.5 shrink-0" />
               {renaming ? (
                 <RenameInput item={item} onFinish={handleFinishRename} />
               ) : (

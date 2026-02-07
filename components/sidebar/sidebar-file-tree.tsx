@@ -1,6 +1,7 @@
 "use client";
 
-import { IconPlus, IconFile, IconFolder } from "@tabler/icons-react";
+import { IconPlus, IconFolder } from "@tabler/icons-react";
+import { MermaidIcon } from "@/components/icons/mermaid-icon";
 
 import {
   SidebarContent,
@@ -41,7 +42,7 @@ export function SidebarFileTree() {
               />
               <DropdownMenuContent side="right" align="start">
                 <DropdownMenuItem onClick={() => createFile(null)}>
-                  <IconFile />
+                  <MermaidIcon />
                   <span>New File</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => createFolder(null)}>

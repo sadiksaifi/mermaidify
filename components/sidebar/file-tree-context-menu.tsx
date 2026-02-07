@@ -1,6 +1,7 @@
 "use client";
 
-import { IconPencil, IconTrash, IconFile, IconFolder } from "@tabler/icons-react";
+import { IconPencil, IconTrash, IconFolder } from "@tabler/icons-react";
+import { MermaidIcon } from "@/components/icons/mermaid-icon";
 
 import {
   ContextMenu,
@@ -47,7 +48,7 @@ export function FileTreeContextMenu({ item, children }: FileTreeContextMenuProps
         {item.type === "folder" && (
           <>
             <ContextMenuItem onClick={handleNewFile}>
-              <IconFile />
+              <MermaidIcon />
               <span>New File</span>
             </ContextMenuItem>
             <ContextMenuItem onClick={handleNewFolder}>
