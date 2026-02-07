@@ -1,6 +1,13 @@
 import { notFound } from "next/navigation";
-import { findItemByPath, getPathToItem } from "@/lib/file-tree-utils";
-import { mockFileTree } from "@/lib/mock-file-tree";
+import { createClient } from "@/lib/supabase/server";
+import { db } from "@/db";
+import { items } from "@/db/schema";
+import { eq, asc, desc } from "drizzle-orm";
+import {
+  buildTreeFromFlatList,
+  findItemByPath,
+  getPathToItem,
+} from "@/lib/file-tree-utils";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,8 +27,31 @@ interface FilePageProps {
 export default async function FilePage({ params }: FilePageProps) {
   const { slug } = await params;
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    notFound();
+  }
+
+  // Fetch user's file tree from DB
+  const rows = await db
+    .select({
+      id: items.id,
+      parentId: items.parentId,
+      name: items.name,
+      isFolder: items.isFolder,
+    })
+    .from(items)
+    .where(eq(items.userId, user.id))
+    .orderBy(desc(items.isFolder), asc(items.name));
+
+  const tree = buildTreeFromFlatList(rows);
+
   // Find the item by the URL path
-  const item = findItemByPath(mockFileTree, slug);
+  const item = findItemByPath(tree, slug);
 
   // If not found or if it's a folder, return 404
   if (!item || item.type === "folder") {
@@ -29,7 +59,7 @@ export default async function FilePage({ params }: FilePageProps) {
   }
 
   // Get the breadcrumb path
-  const pathItems = getPathToItem(mockFileTree, item.id);
+  const pathItems = getPathToItem(tree, item.id);
 
   return (
     <>

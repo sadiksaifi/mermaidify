@@ -16,7 +16,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { useFileTree } from "@/hooks/use-file-tree";
-import type { FileTreeItem } from "@/lib/mock-file-tree";
+import type { FileTreeItem } from "@/lib/types";
 
 interface FileTreeContextMenuProps {
   item: FileTreeItem;

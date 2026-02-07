@@ -1,16 +1,12 @@
-import type { FileTreeItem } from "./mock-file-tree";
+import type { FileTreeItem } from "./types";
 
 /**
  * Slugify a name for URL usage
- * - Lowercase
- * - Spaces to hyphens
- * - Remove .md extension
- * - Remove special characters
  */
 export function slugify(name: string): string {
   return name
     .toLowerCase()
-    .replace(/\.md$/, "")
+    .replace(/\.mmd$/, "")
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
 }
@@ -121,8 +117,42 @@ export function getParentIds(
 }
 
 /**
- * Generate a unique ID
+ * Build a nested tree from a flat list of DB rows.
+ * Rows should be sorted: folders first, then alphabetical by name.
  */
-export function generateId(): string {
-  return Math.random().toString(36).substring(2, 11);
+export function buildTreeFromFlatList(
+  rows: { id: string; parentId: string | null; name: string; isFolder: boolean }[]
+): FileTreeItem[] {
+  const map = new Map<string, FileTreeItem>();
+  const roots: FileTreeItem[] = [];
+
+  // First pass: create all nodes
+  for (const row of rows) {
+    map.set(row.id, {
+      id: row.id,
+      name: row.name,
+      type: row.isFolder ? "folder" : "file",
+      parentId: row.parentId,
+      ...(row.isFolder ? { children: [] } : {}),
+    });
+  }
+
+  // Second pass: link children to parents
+  for (const row of rows) {
+    const node = map.get(row.id)!;
+    if (row.parentId === null) {
+      roots.push(node);
+    } else {
+      const parent = map.get(row.parentId);
+      if (parent) {
+        if (!parent.children) parent.children = [];
+        parent.children.push(node);
+      } else {
+        // Orphaned node — treat as root
+        roots.push(node);
+      }
+    }
+  }
+
+  return roots;
 }

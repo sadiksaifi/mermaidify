@@ -28,7 +28,7 @@ import { FileTreeContextMenu } from "./file-tree-context-menu";
 import { useFileTree } from "@/hooks/use-file-tree";
 import { useFileTreeDnd } from "@/hooks/use-file-tree-dnd";
 import { cn } from "@/lib/utils";
-import type { FileTreeItem } from "@/lib/mock-file-tree";
+import type { FileTreeItem } from "@/lib/types";
 
 interface SidebarFileTreeItemProps {
   item: FileTreeItem;

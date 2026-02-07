@@ -14,7 +14,7 @@ import {
   UniqueIdentifier,
 } from "@dnd-kit/core";
 import { useFileTree } from "@/hooks/use-file-tree";
-import type { FileTreeItem } from "@/lib/mock-file-tree";
+import type { FileTreeItem } from "@/lib/types";
 
 interface FileTreeDndProviderProps {
   children: React.ReactNode;

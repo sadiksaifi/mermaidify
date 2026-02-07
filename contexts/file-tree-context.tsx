@@ -1,22 +1,28 @@
 "use client";
 
 import * as React from "react";
-import type { FileTreeItem } from "@/lib/mock-file-tree";
-import { mockFileTree } from "@/lib/mock-file-tree";
-import { generateId, getParentIds } from "@/lib/file-tree-utils";
+import type { FileTreeItem } from "@/lib/types";
+import { buildTreeFromFlatList, getParentIds } from "@/lib/file-tree-utils";
+import {
+  getUserFileTree,
+  createItem as createItemAction,
+  renameItem as renameItemAction,
+  moveItem as moveItemAction,
+  deleteItem as deleteItemAction,
+} from "@/app/(app)/actions";
 
 interface FileTreeState {
   items: FileTreeItem[];
   expandedIds: Set<string>;
   selectedId: string | null;
   renamingId: string | null;
+  isLoading: boolean;
 }
 
 interface FileTreeContextValue extends FileTreeState {
   // Expansion
   toggleExpanded: (id: string) => void;
   expandTo: (id: string) => void;
-  collapseAll: () => void;
 
   // Selection
   setSelectedId: (id: string | null) => void;
@@ -114,11 +120,20 @@ function updateItemInTree(
 
 export function FileTreeProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = React.useState<FileTreeState>({
-    items: mockFileTree,
+    items: [],
     expandedIds: new Set<string>(),
     selectedId: null,
     renamingId: null,
+    isLoading: true,
   });
+
+  // Load file tree from DB on mount
+  React.useEffect(() => {
+    getUserFileTree().then((rows) => {
+      const tree = buildTreeFromFlatList(rows);
+      setState((prev) => ({ ...prev, items: tree, isLoading: false }));
+    });
+  }, []);
 
   const toggleExpanded = React.useCallback((id: string) => {
     setState((prev) => {
@@ -141,10 +156,6 @@ export function FileTreeProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const collapseAll = React.useCallback(() => {
-    setState((prev) => ({ ...prev, expandedIds: new Set<string>() }));
-  }, []);
-
   const setSelectedId = React.useCallback((id: string | null) => {
     setState((prev) => ({ ...prev, selectedId: id }));
   }, []);
@@ -154,52 +165,96 @@ export function FileTreeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const finishRenaming = React.useCallback((id: string, newName: string) => {
+    // Optimistic update
     setState((prev) => ({
       ...prev,
       items: updateItemInTree(prev.items, id, { name: newName }),
       renamingId: null,
     }));
+    // Persist to DB
+    renameItemAction(id, newName);
   }, []);
 
   const cancelRenaming = React.useCallback(() => {
     setState((prev) => ({ ...prev, renamingId: null }));
   }, []);
 
-  const createFile = React.useCallback((parentId: string | null, name = "Untitled.md") => {
-    const newId = generateId();
-    const newItem: FileTreeItem = {
-      id: newId,
-      name,
-      type: "file",
-      parentId,
-    };
-    setState((prev) => ({
-      ...prev,
-      items: addItemToTree(prev.items, parentId, newItem),
-      renamingId: newId, // Start renaming immediately
-    }));
-    return newId;
-  }, []);
+  const createFile = React.useCallback(
+    (parentId: string | null, name = "Untitled.mmd") => {
+      // Generate a temporary ID for optimistic update
+      const tempId = crypto.randomUUID();
+      const newItem: FileTreeItem = {
+        id: tempId,
+        name,
+        type: "file",
+        parentId,
+      };
 
-  const createFolder = React.useCallback((parentId: string | null, name = "New Folder") => {
-    const newId = generateId();
-    const newItem: FileTreeItem = {
-      id: newId,
-      name,
-      type: "folder",
-      parentId,
-      children: [],
-    };
-    setState((prev) => ({
-      ...prev,
-      items: addItemToTree(prev.items, parentId, newItem),
-      expandedIds: parentId ? new Set([...prev.expandedIds, parentId]) : prev.expandedIds,
-      renamingId: newId, // Start renaming immediately
-    }));
-    return newId;
-  }, []);
+      setState((prev) => ({
+        ...prev,
+        items: addItemToTree(prev.items, parentId, newItem),
+        renamingId: tempId,
+      }));
+
+      // Persist to DB and replace temp ID with real ID
+      createItemAction(parentId, name, false).then((dbItem) => {
+        setState((prev) => ({
+          ...prev,
+          items: updateItemInTree(prev.items, tempId, { id: dbItem.id }),
+          renamingId: prev.renamingId === tempId ? dbItem.id : prev.renamingId,
+          selectedId: prev.selectedId === tempId ? dbItem.id : prev.selectedId,
+        }));
+      });
+
+      return tempId;
+    },
+    []
+  );
+
+  const createFolder = React.useCallback(
+    (parentId: string | null, name = "New Folder") => {
+      const tempId = crypto.randomUUID();
+      const newItem: FileTreeItem = {
+        id: tempId,
+        name,
+        type: "folder",
+        parentId,
+        children: [],
+      };
+
+      setState((prev) => ({
+        ...prev,
+        items: addItemToTree(prev.items, parentId, newItem),
+        expandedIds: parentId
+          ? new Set([...prev.expandedIds, parentId])
+          : prev.expandedIds,
+        renamingId: tempId,
+      }));
+
+      // Persist to DB and replace temp ID with real ID
+      createItemAction(parentId, name, true).then((dbItem) => {
+        setState((prev) => ({
+          ...prev,
+          items: updateItemInTree(prev.items, tempId, { id: dbItem.id }),
+          renamingId: prev.renamingId === tempId ? dbItem.id : prev.renamingId,
+          selectedId: prev.selectedId === tempId ? dbItem.id : prev.selectedId,
+          expandedIds: prev.expandedIds.has(tempId)
+            ? new Set(
+                [...prev.expandedIds].map((id) =>
+                  id === tempId ? dbItem.id : id
+                )
+              )
+            : prev.expandedIds,
+        }));
+      });
+
+      return tempId;
+    },
+    []
+  );
 
   const deleteItem = React.useCallback((id: string) => {
+    // Optimistic update
     setState((prev) => {
       const { items } = removeItemFromTree(prev.items, id);
       const newExpandedIds = new Set(prev.expandedIds);
@@ -212,35 +267,44 @@ export function FileTreeProvider({ children }: { children: React.ReactNode }) {
         renamingId: prev.renamingId === id ? null : prev.renamingId,
       };
     });
+    // Persist to DB
+    deleteItemAction(id);
   }, []);
 
-  const moveItem = React.useCallback((itemId: string, newParentId: string | null) => {
-    setState((prev) => {
-      // Don't move to itself or its own children
-      if (itemId === newParentId) return prev;
+  const moveItem = React.useCallback(
+    (itemId: string, newParentId: string | null) => {
+      // Don't move to itself
+      if (itemId === newParentId) return;
 
-      const { items: itemsAfterRemoval, removed } = removeItemFromTree(prev.items, itemId);
-      if (!removed) return prev;
+      // Optimistic update
+      setState((prev) => {
+        const { items: itemsAfterRemoval, removed } = removeItemFromTree(
+          prev.items,
+          itemId
+        );
+        if (!removed) return prev;
 
-      // Update parentId and add to new location
-      const updatedItem = { ...removed, parentId: newParentId };
-      const newItems = addItemToTree(itemsAfterRemoval, newParentId, updatedItem);
+        const updatedItem = { ...removed, parentId: newParentId };
+        const newItems = addItemToTree(itemsAfterRemoval, newParentId, updatedItem);
 
-      // Expand the new parent if it exists
-      const newExpandedIds = newParentId
-        ? new Set([...prev.expandedIds, newParentId])
-        : prev.expandedIds;
+        const newExpandedIds = newParentId
+          ? new Set([...prev.expandedIds, newParentId])
+          : prev.expandedIds;
 
-      return { ...prev, items: newItems, expandedIds: newExpandedIds };
-    });
-  }, []);
+        return { ...prev, items: newItems, expandedIds: newExpandedIds };
+      });
+
+      // Persist to DB
+      moveItemAction(itemId, newParentId);
+    },
+    []
+  );
 
   const value = React.useMemo<FileTreeContextValue>(
     () => ({
       ...state,
       toggleExpanded,
       expandTo,
-      collapseAll,
       setSelectedId,
       startRenaming,
       finishRenaming,
@@ -254,7 +318,6 @@ export function FileTreeProvider({ children }: { children: React.ReactNode }) {
       state,
       toggleExpanded,
       expandTo,
-      collapseAll,
       setSelectedId,
       startRenaming,
       finishRenaming,
