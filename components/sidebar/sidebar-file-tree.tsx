@@ -54,7 +54,7 @@ export function SidebarFileTree() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <FileTreeDndProvider>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {items.map((item) => (
                   <SidebarFileTreeItem key={item.id} item={item} />
                 ))}

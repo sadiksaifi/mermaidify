@@ -13,6 +13,7 @@ import {
   renameItem,
   moveItem,
   deleteItem,
+  duplicateItem,
   fetchFileContent,
   saveFileContent,
 } from "./http";
@@ -139,6 +140,22 @@ export function useDeleteItemMutation() {
       if (context?.previous) {
         queryClient.setQueryData(itemKeys.list(), context.previous);
       }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: itemKeys.list() });
+    },
+  });
+}
+
+export function useDuplicateItemMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (itemId: string) => duplicateItem(itemId),
+    onSuccess: (newItem) => {
+      queryClient.setQueryData<FileTreeRow[]>(itemKeys.list(), (old) =>
+        old ? [...old, newItem] : [newItem],
+      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: itemKeys.list() });

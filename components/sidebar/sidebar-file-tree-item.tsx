@@ -19,12 +19,16 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
-import { FileTreeContextMenu } from "./file-tree-context-menu";
+import { FileTreeContextMenu, FileTreeItemActions } from "./file-tree-context-menu";
 import { useFileTreeStore } from "@/contexts/file-tree-context";
 import { useFileTreeDnd } from "@/hooks/use-file-tree-dnd";
 import { getItemUrlPath } from "@/lib/file-tree-utils";
 import { cn } from "@/lib/utils";
 import type { FileTreeItem } from "@/lib/types";
+
+// Compact styling overrides
+const compactButton = "h-7 rounded-sm px-2 gap-1.5";
+const compactSubButton = "h-7 rounded-sm px-1.5 gap-1.5";
 
 interface SidebarFileTreeItemProps {
   item: FileTreeItem;
@@ -209,7 +213,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                     render={
                       <SidebarMenuButton
                         isActive={selected}
-                        className="group/folder"
+                        className={cn("group/folder", compactButton)}
                       />
                     }
                   >
@@ -229,6 +233,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                 </FileTreeContextMenu>
               </DraggableWrapper>
             </DroppableWrapper>
+            <FileTreeItemActions item={item} />
           </SidebarMenuItem>
           {hasChildren && (
             <CollapsibleContent>
@@ -254,6 +259,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                 isActive={selected}
                 render={urlPath ? <Link href={urlPath} /> : undefined}
                 onClick={handleFileClick}
+                className={compactButton}
               >
                 <MermaidIcon className="size-4 shrink-0" />
                 {renaming ? (
@@ -265,6 +271,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
             </FileTreeContextMenu>
           </DraggableWrapper>
         </DroppableWrapper>
+        <FileTreeItemActions item={item} />
       </SidebarMenuItem>
     );
   }
@@ -283,7 +290,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                   render={
                     <SidebarMenuSubButton
                       isActive={selected}
-                      className="group/folder"
+                      className={cn("group/folder", compactSubButton)}
                     />
                   }
                 >
@@ -303,6 +310,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
               </FileTreeContextMenu>
             </DraggableWrapper>
           </DroppableWrapper>
+          <FileTreeItemActions item={item} isSubItem />
         </SidebarMenuSubItem>
         {hasChildren && (
           <CollapsibleContent>
@@ -328,6 +336,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
               isActive={selected}
               render={urlPath ? <Link href={urlPath} /> : undefined}
               onClick={handleFileClick}
+              className={compactSubButton}
             >
               <MermaidIcon className="size-3.5 shrink-0" />
               {renaming ? (
@@ -339,6 +348,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
           </FileTreeContextMenu>
         </DraggableWrapper>
       </DroppableWrapper>
+      <FileTreeItemActions item={item} isSubItem />
     </SidebarMenuSubItem>
   );
 }

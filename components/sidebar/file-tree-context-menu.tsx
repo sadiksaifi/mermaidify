@@ -1,7 +1,6 @@
 "use client";
 
-import { IconPencil, IconTrash, IconFolder } from "@tabler/icons-react";
-import { MermaidIcon } from "@/components/icons/mermaid-icon";
+import { IconDots } from "@tabler/icons-react";
 
 import {
   ContextMenu,
@@ -10,7 +9,16 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { useFileTreeStore } from "@/contexts/file-tree-context";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { SidebarMenuAction } from "@/components/ui/sidebar";
+import { FileTreeMenuItems } from "./file-tree-menu-items";
+import { cn } from "@/lib/utils";
 import type { FileTreeItem } from "@/lib/types";
 
 interface FileTreeContextMenuProps {
@@ -18,55 +26,70 @@ interface FileTreeContextMenuProps {
   children: React.ReactNode;
 }
 
-export function FileTreeContextMenu({ item, children }: FileTreeContextMenuProps) {
-  // Action-only subscriptions — stable refs, no re-renders from state changes
-  const startRenaming = useFileTreeStore((s) => s.startRenaming);
-  const deleteItem = useFileTreeStore((s) => s.deleteItem);
-  const createFile = useFileTreeStore((s) => s.createFile);
-  const createFolder = useFileTreeStore((s) => s.createFolder);
+const compactMenuItem = "rounded-md px-2 py-1.5 gap-2 text-xs";
+const compactMenuContent = "rounded-lg p-1 w-48";
 
-  const handleRename = () => {
-    startRenaming(item.id);
-  };
-
-  const handleDelete = () => {
-    deleteItem(item.id);
-  };
-
-  const handleNewFile = () => {
-    createFile(item.id);
-  };
-
-  const handleNewFolder = () => {
-    createFolder(item.id);
-  };
-
+export function FileTreeContextMenu({
+  item,
+  children,
+}: FileTreeContextMenuProps) {
   return (
     <ContextMenu>
       <ContextMenuTrigger className="flex-1">{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-48">
-        {item.type === "folder" && (
-          <>
-            <ContextMenuItem onClick={handleNewFile}>
-              <MermaidIcon />
-              <span>New File</span>
-            </ContextMenuItem>
-            <ContextMenuItem onClick={handleNewFolder}>
-              <IconFolder />
-              <span>New Folder</span>
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-          </>
-        )}
-        <ContextMenuItem onClick={handleRename}>
-          <IconPencil />
-          <span>Rename</span>
-        </ContextMenuItem>
-        <ContextMenuItem onClick={handleDelete} variant="destructive">
-          <IconTrash />
-          <span>Delete</span>
-        </ContextMenuItem>
+      <ContextMenuContent className={compactMenuContent}>
+        <FileTreeMenuItems
+          item={item}
+          MenuItem={({ className, ...props }) => (
+            <ContextMenuItem className={cn(compactMenuItem, className)} {...props} />
+          )}
+          MenuSeparator={ContextMenuSeparator}
+        />
       </ContextMenuContent>
     </ContextMenu>
+  );
+}
+
+interface FileTreeItemActionsProps {
+  item: FileTreeItem;
+  isSubItem?: boolean;
+}
+
+export function FileTreeItemActions({
+  item,
+  isSubItem = false,
+}: FileTreeItemActionsProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          isSubItem ? (
+            <button
+              className={cn(
+                "text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-0.5 right-1 aspect-square w-5 rounded-md p-0 flex items-center justify-center outline-hidden transition-opacity [&>svg]:size-4 [&>svg]:shrink-0",
+                "group-focus-within/menu-sub-item:opacity-100 group-hover/menu-sub-item:opacity-100 aria-expanded:opacity-100 md:opacity-0"
+              )}
+            />
+          ) : (
+            <SidebarMenuAction showOnHover />
+          )
+        }
+      >
+        <IconDots />
+        <span className="sr-only">More</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        side="right"
+        align="start"
+        className={compactMenuContent}
+      >
+        <FileTreeMenuItems
+          item={item}
+          MenuItem={({ className, ...props }) => (
+            <DropdownMenuItem className={cn(compactMenuItem, className)} {...props} />
+          )}
+          MenuSeparator={DropdownMenuSeparator}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

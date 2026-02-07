@@ -13,6 +13,7 @@ import {
   useRenameItemMutation,
   useMoveItemMutation,
   useDeleteItemMutation,
+  useDuplicateItemMutation,
 } from "@/features/items/query";
 
 const FileTreeStoreContext = React.createContext<StoreApi<FileTreeStoreState> | null>(null);
@@ -25,6 +26,7 @@ export function FileTreeProvider({ children }: { children: React.ReactNode }) {
   const renameItemMutation = useRenameItemMutation();
   const moveItemMutation = useMoveItemMutation();
   const deleteItemMutation = useDeleteItemMutation();
+  const duplicateItemMutation = useDuplicateItemMutation();
 
   // Sync TQ data into the store
   React.useEffect(() => {
@@ -38,8 +40,9 @@ export function FileTreeProvider({ children }: { children: React.ReactNode }) {
       renameItem: (input) => renameItemMutation.mutate(input),
       moveItem: (input) => moveItemMutation.mutate(input),
       deleteItem: (id) => deleteItemMutation.mutate(id),
+      duplicateItem: (id, options) => duplicateItemMutation.mutate(id, options),
     });
-  }, [store, createItemMutation, renameItemMutation, moveItemMutation, deleteItemMutation]);
+  }, [store, createItemMutation, renameItemMutation, moveItemMutation, deleteItemMutation, duplicateItemMutation]);
 
   return (
     <FileTreeStoreContext.Provider value={store}>

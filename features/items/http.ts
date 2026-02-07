@@ -32,6 +32,9 @@ export const moveItem = (itemId: string, input: MoveItemInput) =>
 export const deleteItem = (itemId: string) =>
   appFetch<void>(`/api/items/${itemId}`, { method: "DELETE" });
 
+export const duplicateItem = (itemId: string) =>
+  appFetch<FileTreeRow>(`/api/items/${itemId}/duplicate`, { method: "POST" });
+
 export const fetchFileContent = (itemId: string) =>
   appFetch<FileContent>(`/api/items/${itemId}/content`);
 

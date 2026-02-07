@@ -53,6 +53,10 @@ interface Mutations {
   renameItem: (input: { itemId: string; newName: string }) => void;
   moveItem: (input: { itemId: string; newParentId: string | null }) => void;
   deleteItem: (id: string) => void;
+  duplicateItem: (
+    id: string,
+    options?: { onSuccess?: (dbItem: FileTreeRow) => void }
+  ) => void;
 }
 
 export interface FileTreeStoreState {
@@ -78,6 +82,7 @@ export interface FileTreeStoreState {
   createFile: (parentId: string | null, name?: string) => string;
   createFolder: (parentId: string | null, name?: string) => string;
   deleteItem: (id: string) => void;
+  duplicateItem: (id: string) => void;
   moveItem: (itemId: string, newParentId: string | null) => void;
 
   // Sync methods (called by provider)
@@ -266,6 +271,10 @@ export function createFileTreeStore() {
         };
       });
       get()._mutations?.deleteItem(id);
+    },
+
+    duplicateItem: (id) => {
+      get()._mutations?.duplicateItem(id);
     },
 
     moveItem: (itemId, newParentId) => {

@@ -107,6 +107,75 @@ export async function deleteItem(
     .where(and(eq(items.id, id), eq(items.userId, userId)));
 }
 
+export async function duplicateItem(
+  userId: string,
+  itemId: string,
+): Promise<FileTreeRow> {
+  const id = uuidSchema.parse(itemId);
+
+  const [original] = await db
+    .select({
+      id: items.id,
+      parentId: items.parentId,
+      name: items.name,
+      isFolder: items.isFolder,
+    })
+    .from(items)
+    .where(and(eq(items.id, id), eq(items.userId, userId)))
+    .limit(1);
+
+  if (!original) throw new Error("Item not found");
+  if (original.isFolder) throw new Error("Cannot duplicate folders");
+
+  // Find unique copy name
+  const stem = original.name.replace(/\.mmd$/, "");
+  const siblings = await db
+    .select({ name: items.name })
+    .from(items)
+    .where(
+      original.parentId
+        ? and(eq(items.userId, userId), eq(items.parentId, original.parentId))
+        : and(eq(items.userId, userId))
+    );
+
+  const siblingNames = new Set(siblings.map((s) => s.name));
+  let copyName = `${stem} copy.mmd`;
+  let counter = 2;
+  while (siblingNames.has(copyName)) {
+    copyName = `${stem} copy ${counter}.mmd`;
+    counter++;
+  }
+
+  const [newItem] = await db
+    .insert(items)
+    .values({
+      userId,
+      parentId: original.parentId,
+      name: copyName,
+      isFolder: false,
+    })
+    .returning({
+      id: items.id,
+      parentId: items.parentId,
+      name: items.name,
+      isFolder: items.isFolder,
+    });
+
+  // Copy content
+  const [content] = await db
+    .select({ content: fileContents.content })
+    .from(fileContents)
+    .where(eq(fileContents.itemId, id))
+    .limit(1);
+
+  await db.insert(fileContents).values({
+    itemId: newItem.id,
+    content: content?.content ?? "",
+  });
+
+  return newItem;
+}
+
 export async function getFileContent(
   userId: string,
   itemId: string,
