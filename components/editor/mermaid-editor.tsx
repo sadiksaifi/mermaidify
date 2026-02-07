@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
-import Editor, { type BeforeMount } from "@monaco-editor/react";
+import { useCallback, useRef } from "react";
+import Editor, { type BeforeMount, type OnMount } from "@monaco-editor/react";
+import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
 import initMermaid from "monaco-mermaid";
+import { useMermaidLinter } from "@/hooks/use-mermaid-linter";
 
 interface MermaidEditorProps {
   defaultValue: string;
@@ -16,12 +18,27 @@ const handleBeforeMount: BeforeMount = (monaco) => {
 
 export function MermaidEditor({ defaultValue, onChange }: MermaidEditorProps) {
   const { resolvedTheme } = useTheme();
+  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof Monaco | null>(null);
+  const { validate } = useMermaidLinter(editorRef, monacoRef);
+
+  const handleMount: OnMount = useCallback(
+    (editor, monaco) => {
+      editorRef.current = editor;
+      monacoRef.current = monaco;
+      validate(defaultValue);
+    },
+    [defaultValue, validate],
+  );
 
   const handleChange = useCallback(
     (value: string | undefined) => {
-      if (value !== undefined) onChange(value);
+      if (value !== undefined) {
+        onChange(value);
+        validate(value);
+      }
     },
-    [onChange],
+    [onChange, validate],
   );
 
   return (
@@ -30,6 +47,7 @@ export function MermaidEditor({ defaultValue, onChange }: MermaidEditorProps) {
       defaultLanguage="mermaid"
       theme={resolvedTheme === "dark" ? "mermaid-dark" : "mermaid"}
       beforeMount={handleBeforeMount}
+      onMount={handleMount}
       onChange={handleChange}
       loading={
         <div className="h-full w-full animate-pulse rounded bg-muted" />
