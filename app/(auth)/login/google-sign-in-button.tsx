@@ -1,18 +1,32 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { signInWithGoogle } from "./actions";
+import { createClient } from "@/lib/supabase/client";
 
 export function GoogleSignInButton() {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleSignIn() {
+    setIsPending(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      setIsPending(false);
+    }
+  }
 
   return (
     <Button
       variant="outline"
       className="w-full"
       disabled={isPending}
-      onClick={() => startTransition(() => signInWithGoogle())}
+      onClick={handleSignIn}
     >
       {isPending ? (
         "Redirecting..."

@@ -1,13 +1,8 @@
-import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
-import { items } from "@/db/schema";
-import { eq, asc, desc } from "drizzle-orm";
-import {
-  buildTreeFromFlatList,
-  findItemByPath,
-  getPathToItem,
-} from "@/lib/file-tree-utils";
+"use client";
+
+import { use } from "react";
+import { useFileTreeContext } from "@/contexts/file-tree-context";
+import { findItemByPath, getPathToItem } from "@/lib/file-tree-utils";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,42 +19,52 @@ interface FilePageProps {
   params: Promise<{ slug: string[] }>;
 }
 
-export default async function FilePage({ params }: FilePageProps) {
-  const { slug } = await params;
+export default function FilePage({ params }: FilePageProps) {
+  const { slug } = use(params);
+  const { items, isLoading } = useFileTreeContext();
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    notFound();
+  if (isLoading) {
+    return (
+      <>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="h-4 w-48 animate-pulse rounded bg-muted" />
+        </header>
+        <div className="flex-1 p-6">
+          <div className="h-8 w-64 animate-pulse rounded bg-muted" />
+        </div>
+      </>
+    );
   }
 
-  // Fetch user's file tree from DB
-  const rows = await db
-    .select({
-      id: items.id,
-      parentId: items.parentId,
-      name: items.name,
-      isFolder: items.isFolder,
-    })
-    .from(items)
-    .where(eq(items.userId, user.id))
-    .orderBy(desc(items.isFolder), asc(items.name));
+  const item = findItemByPath(items, slug);
 
-  const tree = buildTreeFromFlatList(rows);
-
-  // Find the item by the URL path
-  const item = findItemByPath(tree, slug);
-
-  // If not found or if it's a folder, return 404
   if (!item || item.type === "folder") {
-    notFound();
+    return (
+      <>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>Not Found</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <div className="flex-1 p-6">
+          <h1 className="text-3xl font-bold mb-4">File not found</h1>
+          <p className="text-muted-foreground">
+            The file you&apos;re looking for doesn&apos;t exist.
+          </p>
+        </div>
+      </>
+    );
   }
 
-  // Get the breadcrumb path
-  const pathItems = getPathToItem(tree, item.id);
+  const pathItems = getPathToItem(items, item.id);
 
   return (
     <>

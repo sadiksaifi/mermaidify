@@ -7,19 +7,16 @@ import {
 import { SidebarHeaderSection } from "./sidebar-header";
 import { SidebarFileTree } from "./sidebar-file-tree";
 import { SidebarFooterSection } from "./sidebar-footer";
+import { useAuth } from "@/features/auth/query";
 
-type UserData = {
-  name: string;
-  email: string;
-  avatar: string;
-} | null;
+export function AppSidebar() {
+  const { data: user } = useAuth();
 
-export function AppSidebar({ user }: { user: UserData }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeaderSection />
       <SidebarFileTree />
-      <SidebarFooterSection user={user} />
+      <SidebarFooterSection user={user ?? null} />
       <SidebarRail />
     </Sidebar>
   );

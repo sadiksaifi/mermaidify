@@ -1,6 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Settings01Icon,
@@ -23,16 +24,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/mode-toggle";
-import { signOut } from "@/lib/auth/actions";
+import { createClient } from "@/lib/supabase/client";
+import type { UserData } from "@/features/auth/types";
 
-type UserData = {
-  name: string;
-  email: string;
-  avatar: string;
-} | null;
-
-export function SidebarFooterSection({ user }: { user: UserData }) {
-  const [isPending, startTransition] = useTransition();
+export function SidebarFooterSection({ user }: { user: UserData | null }) {
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
 
   if (!user) return null;
 
@@ -40,6 +37,13 @@ export function SidebarFooterSection({ user }: { user: UserData }) {
     .split(" ")
     .map((n) => n[0])
     .join("");
+
+  async function handleSignOut() {
+    setIsPending(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   return (
     <SidebarFooterPrimitive>
@@ -101,7 +105,7 @@ export function SidebarFooterSection({ user }: { user: UserData }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={isPending}
-                onClick={() => startTransition(() => signOut())}
+                onClick={handleSignOut}
               >
                 <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
                 <span>{isPending ? "Logging out..." : "Log out"}</span>
