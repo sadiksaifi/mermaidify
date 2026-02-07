@@ -28,7 +28,7 @@ export function SidebarFileTree() {
   return (
     <SidebarContent>
       <ScrollArea className="h-full">
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden pr-1">
           <SidebarGroupLabel>
             Files
             <DropdownMenu>
@@ -40,12 +40,12 @@ export function SidebarFileTree() {
                   </SidebarGroupAction>
                 }
               />
-              <DropdownMenuContent side="right" align="start">
-                <DropdownMenuItem onClick={() => createFile(null)}>
+              <DropdownMenuContent side="right" align="start" className="!rounded-md p-1">
+                <DropdownMenuItem onClick={() => createFile(null)} className="!rounded-sm px-2 py-1.5 gap-2 text-xs">
                   <MermaidIcon />
                   <span>New File</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => createFolder(null)}>
+                <DropdownMenuItem onClick={() => createFolder(null)} className="!rounded-sm px-2 py-1.5 gap-2 text-xs">
                   <IconFolder />
                   <span>New Folder</span>
                 </DropdownMenuItem>

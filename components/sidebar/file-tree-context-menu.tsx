@@ -27,7 +27,7 @@ interface FileTreeContextMenuProps {
 }
 
 const compactMenuItem = "!rounded-sm px-2 py-1.5 gap-2 text-xs";
-const compactMenuContent = "!rounded-lg p-1 w-48";
+const compactMenuContent = "!rounded-md p-1 w-48";
 
 export function FileTreeContextMenu({
   item,
@@ -65,12 +65,12 @@ export function FileTreeItemActions({
           isSubItem ? (
             <button
               className={cn(
-                "text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-0.5 right-1 aspect-square w-5 rounded-md p-0 flex items-center justify-center outline-hidden transition-opacity [&>svg]:size-4 [&>svg]:shrink-0",
+                "text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-1 right-1 aspect-square w-5 rounded-md p-0 flex items-center justify-center outline-hidden transition-opacity [&>svg]:size-4 [&>svg]:shrink-0",
                 "group-focus-within/menu-sub-item:opacity-100 group-hover/menu-sub-item:opacity-100 aria-expanded:opacity-100 md:opacity-0"
               )}
             />
           ) : (
-            <SidebarMenuAction showOnHover />
+            <SidebarMenuAction showOnHover className="!top-1" />
           )
         }
       >

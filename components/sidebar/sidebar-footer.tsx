@@ -22,6 +22,9 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { createClient } from "@/lib/supabase/client";
 import type { UserData } from "@/features/auth/types";
 
+const compactMenuItem = "!rounded-sm px-2 gap-2 text-xs h-8";
+const compactMenuContent = "!rounded-md p-1 w-56";
+
 export function SidebarFooterSection({ user }: { user: UserData | null }) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
@@ -66,35 +69,36 @@ export function SidebarFooterSection({ user }: { user: UserData | null }) {
               }
             />
             <DropdownMenuContent
-              className="w-56"
+              className={compactMenuContent}
               side="top"
               align="end"
               sideOffset={4}
             >
-              <div className="flex items-center gap-2 px-3 py-2.5 text-sm">
+              <div className="flex items-center gap-2 px-2 py-1.5 text-xs">
                 <Avatar size="sm">
                   <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate font-semibold text-sm">{user.name}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {user.email}
                   </span>
                 </div>
               </div>
               <DropdownMenuSeparator />
-              <div className="flex items-center justify-between px-3 py-2">
-                <span className="text-sm">Theme</span>
+              <div className="flex items-center justify-between px-2 h-8">
+                <span className="text-xs">Theme</span>
                 <ModeToggle />
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem className={compactMenuItem}>
                 <IconSettings />
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                className={compactMenuItem}
                 disabled={isPending}
                 onClick={handleSignOut}
               >

@@ -29,6 +29,8 @@ import type { FileTreeItem } from "@/lib/types";
 // Compact styling overrides — VS Code / Notion-like flat rows
 const compactButton = "h-7 !rounded-[3px] px-2 gap-1.5";
 const compactSubButton = "h-7 !rounded-[3px] px-1.5 gap-1.5";
+// Reduce sub-menu right margin so highlights extend closer to the edge
+const compactSubMenu = "!mr-0.5 !pr-1";
 
 interface SidebarFileTreeItemProps {
   item: FileTreeItem;
@@ -237,7 +239,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
           </SidebarMenuItem>
           {hasChildren && (
             <CollapsibleContent>
-              <SidebarMenuSub>
+              <SidebarMenuSub className={compactSubMenu}>
                 {item.children!.map((child) => (
                   <SidebarFileTreeItem key={child.id} item={child} level={level + 1} />
                 ))}
@@ -314,7 +316,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
         </SidebarMenuSubItem>
         {hasChildren && (
           <CollapsibleContent>
-            <SidebarMenuSub>
+            <SidebarMenuSub className={compactSubMenu}>
               {item.children!.map((child) => (
                 <SidebarFileTreeItem key={child.id} item={child} level={level + 1} />
               ))}
