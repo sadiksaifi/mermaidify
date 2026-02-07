@@ -26,8 +26,8 @@ interface FileTreeContextMenuProps {
   children: React.ReactNode;
 }
 
-const compactMenuItem = "rounded-md px-2 py-1.5 gap-2 text-xs";
-const compactMenuContent = "rounded-lg p-1 w-48";
+const compactMenuItem = "!rounded-sm px-2 py-1.5 gap-2 text-xs";
+const compactMenuContent = "!rounded-lg p-1 w-48";
 
 export function FileTreeContextMenu({
   item,

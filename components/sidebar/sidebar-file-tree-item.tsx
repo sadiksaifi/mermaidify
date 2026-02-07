@@ -26,9 +26,9 @@ import { getItemUrlPath } from "@/lib/file-tree-utils";
 import { cn } from "@/lib/utils";
 import type { FileTreeItem } from "@/lib/types";
 
-// Compact styling overrides
-const compactButton = "h-7 rounded-sm px-2 gap-1.5";
-const compactSubButton = "h-7 rounded-sm px-1.5 gap-1.5";
+// Compact styling overrides — VS Code / Notion-like flat rows
+const compactButton = "h-7 !rounded-[3px] px-2 gap-1.5";
+const compactSubButton = "h-7 !rounded-[3px] px-1.5 gap-1.5";
 
 interface SidebarFileTreeItemProps {
   item: FileTreeItem;
@@ -148,7 +148,7 @@ function DroppableWrapper({
       ref={setNodeRef}
       className={cn(
         "relative",
-        showDropIndicator && isFolder && "ring-2 ring-sidebar-primary ring-inset rounded-lg",
+        showDropIndicator && isFolder && "ring-2 ring-sidebar-primary ring-inset rounded-[3px]",
         showDropIndicator && !isFolder && "before:absolute before:bottom-0 before:left-0 before:right-0 before:h-0.5 before:bg-sidebar-primary"
       )}
     >
