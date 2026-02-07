@@ -91,8 +91,8 @@ export default function FilePage({ params }: FilePageProps) {
           </BreadcrumbList>
         </Breadcrumb>
       </header>
-      <div className="flex-1 p-6">
-        <FilePageClient itemId={item.id} itemName={item.name} />
+      <div className="flex-1 overflow-hidden">
+        <FilePageClient itemId={item.id} />
       </div>
     </>
   );

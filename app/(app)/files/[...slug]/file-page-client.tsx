@@ -1,29 +1,51 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useFileTree } from "@/hooks/use-file-tree";
+import {
+  useFileContentQuery,
+  useSaveFileContentMutation,
+} from "@/features/items/query";
+import { MermaidEditor } from "@/components/editor/mermaid-editor";
 
 interface FilePageClientProps {
   itemId: string;
-  itemName: string;
 }
 
-export function FilePageClient({ itemId, itemName }: FilePageClientProps) {
+export function FilePageClient({ itemId }: FilePageClientProps) {
   const { setSelectedId, expandTo } = useFileTree();
+  const { data, isLoading } = useFileContentQuery(itemId);
+  const { mutate: saveContent } = useSaveFileContentMutation();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Sync selection and expand folders to reveal the file
   useEffect(() => {
     setSelectedId(itemId);
     expandTo(itemId);
   }, [itemId, setSelectedId, expandTo]);
 
+  const handleChange = useCallback(
+    (value: string) => {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        saveContent({ itemId, content: value });
+      }, 1000);
+    },
+    [itemId, saveContent],
+  );
+
+  useEffect(() => {
+    return () => clearTimeout(timeoutRef.current);
+  }, []);
+
+  if (isLoading) {
+    return <div className="h-full animate-pulse rounded bg-muted" />;
+  }
+
   return (
-    <div className="max-w-3xl">
-      <h1 className="text-3xl font-bold mb-4">{itemName}</h1>
-      <p className="text-muted-foreground">
-        This is a placeholder for the file content. In a real application, this
-        would display the actual content of the file.
-      </p>
-    </div>
+    <MermaidEditor
+      key={itemId}
+      defaultValue={data?.content ?? ""}
+      onChange={handleChange}
+    />
   );
 }
