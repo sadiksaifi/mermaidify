@@ -12,15 +12,33 @@ import {
   SidebarMenu,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useDroppable } from "@dnd-kit/core";
 import { SidebarFileTreeItem } from "./sidebar-file-tree-item";
 import { useFileTree } from "@/hooks/use-file-tree";
-import { FileTreeDndProvider } from "@/hooks/use-file-tree-dnd";
+import { FileTreeDndProvider, ROOT_DROPPABLE_ID, useFileTreeDnd } from "@/hooks/use-file-tree-dnd";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+function RootDropZone() {
+  const activeId = useFileTreeDnd((s) => s.activeId);
+  const { setNodeRef, isOver } = useDroppable({ id: ROOT_DROPPABLE_ID });
+  const showIndicator = isOver && activeId;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex-1 min-h-8",
+        showIndicator && "bg-sidebar-accent/50 ring-1 ring-dashed ring-sidebar-ring rounded-[3px] m-1"
+      )}
+    />
+  );
+}
 
 export function SidebarFileTree() {
   const { items, createFile, createFolder } = useFileTree();
@@ -59,6 +77,7 @@ export function SidebarFileTree() {
                   <SidebarFileTreeItem key={item.id} item={item} />
                 ))}
               </SidebarMenu>
+              <RootDropZone />
             </FileTreeDndProvider>
           </SidebarGroupContent>
         </SidebarGroup>

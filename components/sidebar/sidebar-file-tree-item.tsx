@@ -39,10 +39,14 @@ interface SidebarFileTreeItemProps {
 
 function RenameInput({
   item,
+  isCreating,
   onFinish,
+  onCancel,
 }: {
   item: FileTreeItem;
+  isCreating?: boolean;
   onFinish: (name: string) => void;
+  onCancel: () => void;
 }) {
   const isFile = item.type === "file";
   const stem = isFile ? item.name.replace(/\.mmd$/, "") : item.name;
@@ -56,20 +60,42 @@ function RenameInput({
 
   const handleSubmit = () => {
     const trimmed = value.trim();
+    if (!trimmed) {
+      onCancel();
+      return;
+    }
     const fullName = isFile ? `${trimmed}.mmd` : trimmed;
-    if (trimmed && fullName !== item.name) {
+    if (fullName !== item.name) {
       onFinish(fullName);
     } else {
-      onFinish(item.name);
+      onCancel();
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleSubmit();
+      if (isCreating) {
+        const trimmed = value.trim();
+        if (!trimmed) {
+          onCancel();
+          return;
+        }
+        const fullName = isFile ? `${trimmed}.mmd` : trimmed;
+        onFinish(fullName);
+      } else {
+        handleSubmit();
+      }
     } else if (e.key === "Escape") {
-      onFinish(item.name);
+      onCancel();
+    }
+  };
+
+  const handleBlur = () => {
+    if (isCreating) {
+      onCancel();
+    } else {
+      handleSubmit();
     }
   };
 
@@ -80,7 +106,7 @@ function RenameInput({
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onBlur={handleSubmit}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         className="min-w-0 flex-1 bg-transparent text-sm outline-none border-b border-sidebar-ring px-1"
         onClick={(e) => e.stopPropagation()}
@@ -102,9 +128,10 @@ function DraggableWrapper({
   className?: string;
 }) {
   const isDndEnabled = useFileTreeDnd((s) => s.isDndEnabled);
+  const isCreating = useFileTreeStore((s) => s.creatingIds.has(id));
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id,
-    disabled: !isDndEnabled,
+    disabled: !isDndEnabled || isCreating,
   });
 
   if (!isDndEnabled) {
@@ -164,6 +191,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
   const expanded = useFileTreeStore((s) => s.expandedIds.has(item.id));
   const selected = useFileTreeStore((s) => s.selectedId === item.id);
   const renaming = useFileTreeStore((s) => s.renamingId === item.id);
+  const isCreating = useFileTreeStore((s) => s.creatingIds.has(item.id));
   const items = useFileTreeStore((s) => s.items);
 
   // Actions are stable references — subscribing doesn't cause re-renders
@@ -171,6 +199,8 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
   const setSelectedId = useFileTreeStore((s) => s.setSelectedId);
   const finishRenaming = useFileTreeStore((s) => s.finishRenaming);
   const cancelRenaming = useFileTreeStore((s) => s.cancelRenaming);
+  const confirmCreate = useFileTreeStore((s) => s.confirmCreate);
+  const abortCreate = useFileTreeStore((s) => s.abortCreate);
 
   const activeId = useFileTreeDnd((s) => s.activeId);
 
@@ -179,9 +209,19 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
   const hasChildren = isFolder && item.children && item.children.length > 0;
   const isDragging = activeId === item.id;
 
-  const handleFinishRename = (newName: string) => {
-    if (newName !== item.name) {
+  const handleRenameFinish = (newName: string) => {
+    if (isCreating) {
+      confirmCreate(item.id, newName);
+    } else if (newName !== item.name) {
       finishRenaming(item.id, newName);
+    } else {
+      cancelRenaming();
+    }
+  };
+
+  const handleRenameCancel = () => {
+    if (isCreating) {
+      abortCreate(item.id);
     } else {
       cancelRenaming();
     }
@@ -227,7 +267,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                     />
                     <>{expanded ? <IconFolderOpen className="size-4 shrink-0" /> : <IconFolder className="size-4 shrink-0" />}</>
                     {renaming ? (
-                      <RenameInput item={item} onFinish={handleFinishRename} />
+                      <RenameInput item={item} isCreating={isCreating} onFinish={handleRenameFinish} onCancel={handleRenameCancel} />
                     ) : (
                       <span className="truncate">{item.name}</span>
                     )}
@@ -265,7 +305,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
               >
                 <MermaidIcon className="size-4 shrink-0" />
                 {renaming ? (
-                  <RenameInput item={item} onFinish={handleFinishRename} />
+                  <RenameInput item={item} isCreating={isCreating} onFinish={handleRenameFinish} onCancel={handleRenameCancel} />
                 ) : (
                   <span className="truncate">{item.name}</span>
                 )}
@@ -304,7 +344,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                   />
                   <>{expanded ? <IconFolderOpen className="size-3.5 shrink-0" /> : <IconFolder className="size-3.5 shrink-0" />}</>
                   {renaming ? (
-                    <RenameInput item={item} onFinish={handleFinishRename} />
+                    <RenameInput item={item} isCreating={isCreating} onFinish={handleRenameFinish} onCancel={handleRenameCancel} />
                   ) : (
                     <span className="truncate">{item.name}</span>
                   )}
@@ -342,7 +382,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
             >
               <MermaidIcon className="size-3.5 shrink-0" />
               {renaming ? (
-                <RenameInput item={item} onFinish={handleFinishRename} />
+                <RenameInput item={item} isCreating={isCreating} onFinish={handleRenameFinish} onCancel={handleRenameCancel} />
               ) : (
                 <span className="truncate">{item.name}</span>
               )}

@@ -64,6 +64,7 @@ export interface FileTreeStoreState {
   expandedIds: Set<string>;
   selectedId: string | null;
   renamingId: string | null;
+  creatingIds: Set<string>;
   pendingItems: FileTreeItem[];
   items: FileTreeItem[];
   isLoading: boolean;
@@ -81,6 +82,8 @@ export interface FileTreeStoreState {
   cancelRenaming: () => void;
   createFile: (parentId: string | null, name?: string) => string;
   createFolder: (parentId: string | null, name?: string) => string;
+  confirmCreate: (id: string, name: string) => void;
+  abortCreate: (id: string) => void;
   deleteItem: (id: string) => void;
   duplicateItem: (id: string) => void;
   moveItem: (itemId: string, newParentId: string | null) => void;
@@ -96,6 +99,7 @@ export function createFileTreeStore() {
     expandedIds: new Set<string>(),
     selectedId: null,
     renamingId: null,
+    creatingIds: new Set<string>(),
     pendingItems: [],
     items: [],
     isLoading: true,
@@ -144,6 +148,12 @@ export function createFileTreeStore() {
     },
 
     createFile: (parentId, name = "Untitled.mmd") => {
+      // Auto-abort any existing in-progress creation
+      const { creatingIds } = get();
+      for (const existingId of creatingIds) {
+        get().abortCreate(existingId);
+      }
+
       const tempId = crypto.randomUUID();
       const newItem: FileTreeItem = {
         id: tempId,
@@ -154,49 +164,26 @@ export function createFileTreeStore() {
 
       set((state) => {
         const newPending = [...state.pendingItems, newItem];
+        const newCreatingIds = new Set(state.creatingIds);
+        newCreatingIds.add(tempId);
         return {
           pendingItems: newPending,
           items: computeItems(state._rows, newPending),
           renamingId: tempId,
+          creatingIds: newCreatingIds,
         };
       });
-
-      get()._mutations?.createItem(
-        { parentId, name, isFolder: false },
-        {
-          onSuccess: (dbItem) => {
-            set((state) => {
-              const newPending = state.pendingItems.filter(
-                (p) => p.id !== tempId
-              );
-              return {
-                pendingItems: newPending,
-                items: computeItems(state._rows, newPending),
-                renamingId:
-                  state.renamingId === tempId ? dbItem.id : state.renamingId,
-                selectedId:
-                  state.selectedId === tempId ? dbItem.id : state.selectedId,
-              };
-            });
-          },
-          onError: () => {
-            set((state) => {
-              const newPending = state.pendingItems.filter(
-                (p) => p.id !== tempId
-              );
-              return {
-                pendingItems: newPending,
-                items: computeItems(state._rows, newPending),
-              };
-            });
-          },
-        }
-      );
 
       return tempId;
     },
 
     createFolder: (parentId, name = "New Folder") => {
+      // Auto-abort any existing in-progress creation
+      const { creatingIds } = get();
+      for (const existingId of creatingIds) {
+        get().abortCreate(existingId);
+      }
+
       const tempId = crypto.randomUUID();
       const newItem: FileTreeItem = {
         id: tempId,
@@ -208,6 +195,8 @@ export function createFileTreeStore() {
 
       set((state) => {
         const newPending = [...state.pendingItems, newItem];
+        const newCreatingIds = new Set(state.creatingIds);
+        newCreatingIds.add(tempId);
         return {
           pendingItems: newPending,
           items: computeItems(state._rows, newPending),
@@ -215,28 +204,52 @@ export function createFileTreeStore() {
             ? new Set([...state.expandedIds, parentId])
             : state.expandedIds,
           renamingId: tempId,
+          creatingIds: newCreatingIds,
         };
       });
 
+      return tempId;
+    },
+
+    confirmCreate: (id, name) => {
+      const { pendingItems, creatingIds } = get();
+      if (!creatingIds.has(id)) return;
+
+      const pending = pendingItems.find((p) => p.id === id);
+      if (!pending) return;
+
+      const isFolder = pending.type === "folder";
+
+      // Remove from creatingIds
+      set((state) => {
+        const newCreatingIds = new Set(state.creatingIds);
+        newCreatingIds.delete(id);
+        return {
+          renamingId: state.renamingId === id ? null : state.renamingId,
+          creatingIds: newCreatingIds,
+        };
+      });
+
+      // Fire the mutation
       get()._mutations?.createItem(
-        { parentId, name, isFolder: true },
+        { parentId: pending.parentId, name, isFolder },
         {
           onSuccess: (dbItem) => {
             set((state) => {
               const newPending = state.pendingItems.filter(
-                (p) => p.id !== tempId
+                (p) => p.id !== id
               );
               return {
                 pendingItems: newPending,
                 items: computeItems(state._rows, newPending),
                 renamingId:
-                  state.renamingId === tempId ? dbItem.id : state.renamingId,
+                  state.renamingId === id ? dbItem.id : state.renamingId,
                 selectedId:
-                  state.selectedId === tempId ? dbItem.id : state.selectedId,
-                expandedIds: state.expandedIds.has(tempId)
+                  state.selectedId === id ? dbItem.id : state.selectedId,
+                expandedIds: state.expandedIds.has(id)
                   ? new Set(
-                      [...state.expandedIds].map((id) =>
-                        id === tempId ? dbItem.id : id
+                      [...state.expandedIds].map((eid) =>
+                        eid === id ? dbItem.id : eid
                       )
                     )
                   : state.expandedIds,
@@ -246,7 +259,7 @@ export function createFileTreeStore() {
           onError: () => {
             set((state) => {
               const newPending = state.pendingItems.filter(
-                (p) => p.id !== tempId
+                (p) => p.id !== id
               );
               return {
                 pendingItems: newPending,
@@ -256,8 +269,27 @@ export function createFileTreeStore() {
           },
         }
       );
+    },
 
-      return tempId;
+    abortCreate: (id) => {
+      set((state) => {
+        if (!state.creatingIds.has(id)) return state;
+
+        const newPending = state.pendingItems.filter((p) => p.id !== id);
+        const newCreatingIds = new Set(state.creatingIds);
+        newCreatingIds.delete(id);
+        const newExpandedIds = new Set(state.expandedIds);
+        newExpandedIds.delete(id);
+
+        return {
+          pendingItems: newPending,
+          items: computeItems(state._rows, newPending),
+          creatingIds: newCreatingIds,
+          expandedIds: newExpandedIds,
+          renamingId: state.renamingId === id ? null : state.renamingId,
+          selectedId: state.selectedId === id ? null : state.selectedId,
+        };
+      });
     },
 
     deleteItem: (id) => {

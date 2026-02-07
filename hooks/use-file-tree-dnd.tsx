@@ -21,6 +21,8 @@ import {
 import type { StoreApi } from "zustand";
 import { findItemById } from "@/lib/file-tree-utils";
 
+export const ROOT_DROPPABLE_ID = "__root__";
+
 interface FileTreeDndProviderProps {
   children: React.ReactNode;
 }
@@ -63,12 +65,19 @@ export function FileTreeDndProvider({ children }: FileTreeDndProviderProps) {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const targetItem = findItemById(items, String(over.id));
+      if (String(over.id) === ROOT_DROPPABLE_ID) {
+        const activeItem = findItemById(items, String(active.id));
+        if (activeItem && activeItem.parentId !== null) {
+          moveItem(String(active.id), null);
+        }
+      } else {
+        const targetItem = findItemById(items, String(over.id));
 
-      if (targetItem) {
-        const newParentId =
-          targetItem.type === "folder" ? targetItem.id : targetItem.parentId;
-        moveItem(String(active.id), newParentId);
+        if (targetItem) {
+          const newParentId =
+            targetItem.type === "folder" ? targetItem.id : targetItem.parentId;
+          moveItem(String(active.id), newParentId);
+        }
       }
     }
 
