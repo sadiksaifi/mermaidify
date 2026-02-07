@@ -13,10 +13,17 @@ function getSidebarWidthCookie(): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
+function getSidebarStateCookie(): boolean | undefined {
+  if (typeof document === "undefined") return undefined;
+  const match = document.cookie.match(/(?:^|;\s*)sidebar_state=(true|false)/);
+  return match ? match[1] === "true" : undefined;
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { data: user, isLoading, isError } = useAuth();
   const defaultWidth = useMemo(() => getSidebarWidthCookie(), []);
+  const defaultOpen = useMemo(() => getSidebarStateCookie(), []);
 
   useEffect(() => {
     if (!isLoading && (!user || isError)) {
@@ -29,7 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <FileTreeProvider>
-      <SidebarProvider defaultWidth={defaultWidth}>
+      <SidebarProvider defaultOpen={defaultOpen} defaultWidth={defaultWidth}>
         <AppSidebar />
         <SidebarInset>{children}</SidebarInset>
       </SidebarProvider>

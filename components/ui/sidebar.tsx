@@ -59,7 +59,7 @@ function useSidebar() {
 }
 
 function SidebarProvider({
-  defaultOpen = true,
+  defaultOpen = false,
   defaultWidth = SIDEBAR_WIDTH_DEFAULT,
   open: openProp,
   onOpenChange: setOpenProp,
