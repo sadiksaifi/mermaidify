@@ -6,7 +6,7 @@ interface GestureEvent extends UIEvent {
   rotation: number;
 }
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ZoomInAreaIcon,
@@ -59,7 +59,7 @@ export function MermaidPreview({ svg, error }: MermaidPreviewProps) {
   const zoomToward = useCallback(
     (cx: number, cy: number, factor: number) => {
       setTransform((prev) => {
-        const newScale = Math.min(5, Math.max(0.1, prev.scale * factor));
+        const newScale = Math.min(10, Math.max(0.1, prev.scale * factor));
         const ratio = newScale / prev.scale;
         return {
           x: cx - (cx - prev.x) * ratio,
@@ -164,6 +164,44 @@ export function MermaidPreview({ svg, error }: MermaidPreviewProps) {
     setTransform({ x: 0, y: 0, scale: 1 });
   }, []);
 
+  // Pre-process SVG: extract intrinsic dimensions and make it responsive
+  // so we can size it via CSS width/height instead of CSS scale() — keeps
+  // the SVG rendering as a vector at any zoom level (no rasterization blur).
+  const processed = useMemo(() => {
+    if (!svg) return null;
+    const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
+    const el = doc.querySelector("svg");
+    if (!el) return null;
+
+    // Extract intrinsic dimensions — prefer viewBox (canonical coordinate
+    // space). Mermaid sets width="100%" which parseFloat reads as 100, so
+    // width/height attributes are only used as fallback for absolute values.
+    const vb = el.getAttribute("viewBox");
+    const vbParts = vb?.split(/[\s,]+/).map(Number);
+    const wAttr = el.getAttribute("width") || "";
+    const hAttr = el.getAttribute("height") || "";
+    const isAbsoluteW = /^\d/.test(wAttr) && !wAttr.includes("%");
+    const isAbsoluteH = /^\d/.test(hAttr) && !hAttr.includes("%");
+
+    let intrinsicW: number;
+    let intrinsicH: number;
+
+    if (vbParts && vbParts.length === 4 && vbParts[2] > 0 && vbParts[3] > 0) {
+      intrinsicW = vbParts[2];
+      intrinsicH = vbParts[3];
+    } else {
+      intrinsicW = isAbsoluteW ? parseFloat(wAttr) : 100;
+      intrinsicH = isAbsoluteH ? parseFloat(hAttr) : 100;
+    }
+
+    if (!vb) el.setAttribute("viewBox", `0 0 ${intrinsicW} ${intrinsicH}`);
+    el.setAttribute("width", "100%");
+    el.setAttribute("height", "100%");
+    el.removeAttribute("style"); // strip mermaid's max-width
+
+    return { html: el.outerHTML, width: intrinsicW, height: intrinsicH };
+  }, [svg]);
+
   // Empty state
   if (!svg && !error) {
     return (
@@ -183,16 +221,19 @@ export function MermaidPreview({ svg, error }: MermaidPreviewProps) {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      {/* SVG content */}
-      {svg && (
+      {/* SVG content — sized via width/height instead of CSS scale() to keep
+           the SVG rendering as a crisp vector at every zoom level */}
+      {processed && (
         <div
           className={error ? "opacity-30" : undefined}
           style={{
-            transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+            position: "absolute",
+            transform: `translate(${transform.x}px, ${transform.y}px)`,
             transformOrigin: "0 0",
-            willChange: "transform",
+            width: `${processed.width * transform.scale}px`,
+            height: `${processed.height * transform.scale}px`,
           }}
-          dangerouslySetInnerHTML={{ __html: svg }}
+          dangerouslySetInnerHTML={{ __html: processed.html }}
         />
       )}
 
