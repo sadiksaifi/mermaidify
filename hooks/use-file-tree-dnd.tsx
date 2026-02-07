@@ -17,7 +17,7 @@ import { useFileTreeStore } from "@/contexts/file-tree-context";
 import {
   createFileTreeDndStore,
   type FileTreeDndStoreState,
-} from "@/stores/file-tree-dnd-store";
+} from "@/features/items/dnd-store";
 import type { StoreApi } from "zustand";
 import { findItemById } from "@/lib/file-tree-utils";
 

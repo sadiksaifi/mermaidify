@@ -5,7 +5,7 @@ import { useStore } from "zustand";
 import {
   createFileTreeStore,
   type FileTreeStoreState,
-} from "@/stores/file-tree-store";
+} from "@/features/items/store";
 import type { StoreApi } from "zustand";
 import {
   useItemsQuery,

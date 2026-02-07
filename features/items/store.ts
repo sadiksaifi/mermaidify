@@ -1,6 +1,6 @@
 import { createStore } from "zustand/vanilla";
 import type { FileTreeItem } from "@/lib/types";
-import type { FileTreeRow } from "@/features/items/types";
+import type { FileTreeRow } from "./types";
 import { buildTreeFromFlatList, getParentIds } from "@/lib/file-tree-utils";
 
 function addItemToTree(
