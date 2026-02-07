@@ -1,7 +1,6 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { PlusSignIcon } from "@hugeicons/core-free-icons";
+import { IconPlus, IconFile, IconFolder } from "@tabler/icons-react";
 
 import {
   SidebarContent,
@@ -21,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { File01Icon, Folder01Icon } from "@hugeicons/core-free-icons";
 
 export function SidebarFileTree() {
   const { items, createFile, createFolder } = useFileTree();
@@ -36,18 +34,18 @@ export function SidebarFileTree() {
               <DropdownMenuTrigger
                 render={
                   <SidebarGroupAction>
-                    <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
+                    <IconPlus />
                     <span className="sr-only">Add new</span>
                   </SidebarGroupAction>
                 }
               />
               <DropdownMenuContent side="right" align="start">
                 <DropdownMenuItem onClick={() => createFile(null)}>
-                  <HugeiconsIcon icon={File01Icon} strokeWidth={2} />
+                  <IconFile />
                   <span>New File</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => createFolder(null)}>
-                  <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />
+                  <IconFolder />
                   <span>New Folder</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

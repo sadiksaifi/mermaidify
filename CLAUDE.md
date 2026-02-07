@@ -30,7 +30,7 @@ bun run typecheck  # Run TypeScript type checking
 - **Framework**: Next.js 16 with App Router
 - **UI Components**: shadcn (configured via components.json) + Base UI React
 - **Styling**: Tailwind CSS v4 with CSS variables (OKLCH color model)
-- **Icons**: HugeIcons (`@hugeicons/react`)
+- **Icons**: Tabler Icons (`@tabler/icons-react`)
 - **Component Variants**: Class Variance Authority (CVA)
 
 ### Import Aliases

@@ -7,14 +7,7 @@ interface GestureEvent extends UIEvent {
 }
 
 import { useRef, useState, useCallback, useEffect, useMemo } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ZoomInAreaIcon,
-  ZoomOutAreaIcon,
-  SearchAreaIcon,
-  ArrowExpandDiagonal01Icon,
-  ArrowShrink01Icon,
-} from "@hugeicons/core-free-icons";
+import { IconZoomIn, IconZoomOut, IconZoomScan, IconMaximize, IconMinimize } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -269,26 +262,23 @@ export function MermaidPreview({ svg, error }: MermaidPreviewProps) {
       {/* Zoom controls */}
       <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1 rounded-lg border bg-background/80 p-1 backdrop-blur-sm">
         <Button variant="ghost" size="icon-xs" onClick={handleZoomOut}>
-          <HugeiconsIcon icon={ZoomOutAreaIcon} className="size-3.5" />
+          <IconZoomOut className="size-3.5" />
         </Button>
         <span className="min-w-10 text-center text-xs tabular-nums text-muted-foreground">
           {Math.round(transform.scale * 100)}%
         </span>
         <Button variant="ghost" size="icon-xs" onClick={handleZoomIn}>
-          <HugeiconsIcon icon={ZoomInAreaIcon} className="size-3.5" />
+          <IconZoomIn className="size-3.5" />
         </Button>
         <Button variant="ghost" size="icon-xs" onClick={handleFitToView}>
-          <HugeiconsIcon icon={SearchAreaIcon} className="size-3.5" />
+          <IconZoomScan className="size-3.5" />
         </Button>
         <Button
           variant="ghost"
           size="icon-xs"
           onClick={() => setIsFullscreen((f) => !f)}
         >
-          <HugeiconsIcon
-            icon={isFullscreen ? ArrowShrink01Icon : ArrowExpandDiagonal01Icon}
-            className="size-3.5"
-          />
+          {isFullscreen ? <IconMinimize className="size-3.5" /> : <IconMaximize className="size-3.5" />}
         </Button>
       </div>
     </div>

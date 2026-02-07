@@ -2,8 +2,7 @@
 
 import * as React from "react"
 import { useTheme } from "next-themes"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Sun03Icon, Moon02Icon } from "@hugeicons/core-free-icons"
+import { IconSun, IconMoon } from "@tabler/icons-react"
 
 import { cn } from "@/lib/utils"
 
@@ -49,18 +48,14 @@ export function ModeToggle({ className }: { className?: string }) {
         )}
       >
         {/* Sun icon */}
-        <HugeiconsIcon
-          icon={Sun03Icon}
-          strokeWidth={2}
+        <IconSun
           className={cn(
             "absolute size-2.5 text-foreground transition-all duration-500",
             isDark ? "scale-0 opacity-0 rotate-90" : "scale-100 opacity-100 rotate-0"
           )}
         />
         {/* Moon icon */}
-        <HugeiconsIcon
-          icon={Moon02Icon}
-          strokeWidth={2}
+        <IconMoon
           className={cn(
             "absolute size-2.5 text-foreground transition-all duration-500",
             isDark ? "scale-100 opacity-100 rotate-0" : "scale-0 opacity-0 -rotate-90"

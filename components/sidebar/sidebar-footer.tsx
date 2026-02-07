@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Settings01Icon,
-  Logout01Icon,
-  ArrowUp01Icon,
-} from "@hugeicons/core-free-icons";
+import { IconSettings, IconLogout, IconChevronUp } from "@tabler/icons-react";
 
 import {
   SidebarFooter as SidebarFooterPrimitive,
@@ -66,11 +61,7 @@ export function SidebarFooterSection({ user }: { user: UserData | null }) {
                       {user.email}
                     </span>
                   </div>
-                  <HugeiconsIcon
-                    icon={ArrowUp01Icon}
-                    strokeWidth={2}
-                    className="ml-auto size-4"
-                  />
+                  <IconChevronUp className="ml-auto size-4" />
                 </SidebarMenuButton>
               }
             />
@@ -99,7 +90,7 @@ export function SidebarFooterSection({ user }: { user: UserData | null }) {
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <HugeiconsIcon icon={Settings01Icon} strokeWidth={2} />
+                <IconSettings />
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -107,7 +98,7 @@ export function SidebarFooterSection({ user }: { user: UserData | null }) {
                 disabled={isPending}
                 onClick={handleSignOut}
               >
-                <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
+                <IconLogout />
                 <span>{isPending ? "Logging out..." : "Log out"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

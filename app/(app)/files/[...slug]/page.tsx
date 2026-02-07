@@ -19,8 +19,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { LayoutLeftIcon, LayoutTopIcon } from "@hugeicons/core-free-icons";
+import { IconLayoutColumns, IconLayoutRows } from "@tabler/icons-react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { FilePageClient } from "./file-page-client";
 
@@ -117,13 +116,10 @@ export default function FilePage({ params }: FilePageProps) {
               />
             }
           >
-            <HugeiconsIcon
-              icon={
-                splitDirection === "horizontal"
-                  ? LayoutLeftIcon
-                  : LayoutTopIcon
-              }
-            />
+            {splitDirection === "horizontal"
+              ? <IconLayoutColumns />
+              : <IconLayoutRows />
+            }
           </TooltipTrigger>
           <TooltipContent>
             {splitDirection === "horizontal"

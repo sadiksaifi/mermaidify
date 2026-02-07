@@ -3,13 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ArrowRight01Icon,
-  File01Icon,
-  Folder01Icon,
-  FolderOpenIcon,
-} from "@hugeicons/core-free-icons";
+import { IconChevronRight, IconFile, IconFolder, IconFolderOpen } from "@tabler/icons-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 import {
@@ -218,19 +212,13 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                       />
                     }
                   >
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      strokeWidth={2}
+                    <IconChevronRight
                       className={cn(
                         "size-4 shrink-0 transition-transform duration-200",
                         expanded && "rotate-90"
                       )}
                     />
-                    <HugeiconsIcon
-                      icon={expanded ? FolderOpenIcon : Folder01Icon}
-                      strokeWidth={2}
-                      className="size-4 shrink-0"
-                    />
+                    <>{expanded ? <IconFolderOpen className="size-4 shrink-0" /> : <IconFolder className="size-4 shrink-0" />}</>
                     {renaming ? (
                       <RenameInput item={item} onFinish={handleFinishRename} />
                     ) : (
@@ -266,7 +254,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                 render={urlPath ? <Link href={urlPath} /> : undefined}
                 onClick={handleFileClick}
               >
-                <HugeiconsIcon icon={File01Icon} strokeWidth={2} className="size-4 shrink-0" />
+                <IconFile className="size-4 shrink-0" />
                 {renaming ? (
                   <RenameInput item={item} onFinish={handleFinishRename} />
                 ) : (
@@ -298,19 +286,13 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                     />
                   }
                 >
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    strokeWidth={2}
+                  <IconChevronRight
                     className={cn(
                       "size-3.5 shrink-0 transition-transform duration-200",
                       expanded && "rotate-90"
                     )}
                   />
-                  <HugeiconsIcon
-                    icon={expanded ? FolderOpenIcon : Folder01Icon}
-                    strokeWidth={2}
-                    className="size-3.5 shrink-0"
-                  />
+                  <>{expanded ? <IconFolderOpen className="size-3.5 shrink-0" /> : <IconFolder className="size-3.5 shrink-0" />}</>
                   {renaming ? (
                     <RenameInput item={item} onFinish={handleFinishRename} />
                   ) : (
@@ -346,7 +328,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
               render={urlPath ? <Link href={urlPath} /> : undefined}
               onClick={handleFileClick}
             >
-              <HugeiconsIcon icon={File01Icon} strokeWidth={2} className="size-3.5 shrink-0" />
+              <IconFile className="size-3.5 shrink-0" />
               {renaming ? (
                 <RenameInput item={item} onFinish={handleFinishRename} />
               ) : (

@@ -1,12 +1,6 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Edit02Icon,
-  Delete02Icon,
-  File01Icon,
-  Folder01Icon,
-} from "@hugeicons/core-free-icons";
+import { IconPencil, IconTrash, IconFile, IconFolder } from "@tabler/icons-react";
 
 import {
   ContextMenu,
@@ -53,22 +47,22 @@ export function FileTreeContextMenu({ item, children }: FileTreeContextMenuProps
         {item.type === "folder" && (
           <>
             <ContextMenuItem onClick={handleNewFile}>
-              <HugeiconsIcon icon={File01Icon} strokeWidth={2} />
+              <IconFile />
               <span>New File</span>
             </ContextMenuItem>
             <ContextMenuItem onClick={handleNewFolder}>
-              <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />
+              <IconFolder />
               <span>New Folder</span>
             </ContextMenuItem>
             <ContextMenuSeparator />
           </>
         )}
         <ContextMenuItem onClick={handleRename}>
-          <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} />
+          <IconPencil />
           <span>Rename</span>
         </ContextMenuItem>
         <ContextMenuItem onClick={handleDelete} variant="destructive">
-          <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} />
+          <IconTrash />
           <span>Delete</span>
         </ContextMenuItem>
       </ContextMenuContent>

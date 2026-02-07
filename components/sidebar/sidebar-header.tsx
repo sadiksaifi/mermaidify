@@ -1,12 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Home01Icon,
-  Search01Icon,
-  InboxIcon,
-} from "@hugeicons/core-free-icons";
+import { IconHome, IconSearch, IconInbox } from "@tabler/icons-react";
 
 import {
   SidebarHeader as SidebarHeaderPrimitive,
@@ -36,7 +31,7 @@ export function SidebarHeaderSection() {
         {/* Home */}
         <SidebarMenuItem>
           <SidebarMenuButton render={<Link href="/" />} tooltip="Home">
-            <HugeiconsIcon icon={Home01Icon} strokeWidth={2} />
+            <IconHome />
             <span>Home</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -44,7 +39,7 @@ export function SidebarHeaderSection() {
         {/* Search */}
         <SidebarMenuItem>
           <SidebarMenuButton tooltip="Search">
-            <HugeiconsIcon icon={Search01Icon} strokeWidth={2} />
+            <IconSearch />
             <span>Search</span>
             <Kbd className="ml-auto">
               <span className="text-[10px]">&#8984;</span>K
@@ -55,7 +50,7 @@ export function SidebarHeaderSection() {
         {/* Inbox */}
         <SidebarMenuItem>
           <SidebarMenuButton tooltip="Inbox">
-            <HugeiconsIcon icon={InboxIcon} strokeWidth={2} />
+            <IconInbox />
             <span>Inbox</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
