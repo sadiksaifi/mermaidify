@@ -1,7 +1,7 @@
 import { createStore } from "zustand/vanilla";
 import type { FileTreeItem } from "@/lib/types";
 import type { FileTreeRow } from "./types";
-import { buildTreeFromFlatList, getParentIds } from "@/lib/file-tree-utils";
+import { buildTreeFromFlatList, getParentIds, flattenVisibleTree, isDescendantOf } from "@/lib/file-tree-utils";
 
 function addItemToTree(
   items: FileTreeItem[],
@@ -63,6 +63,8 @@ export interface FileTreeStoreState {
   // Public state
   expandedIds: Set<string>;
   selectedId: string | null;
+  selectedIds: Set<string>;
+  lastClickedId: string | null;
   renamingId: string | null;
   creatingIds: Set<string>;
   pendingItems: FileTreeItem[];
@@ -77,6 +79,10 @@ export interface FileTreeStoreState {
   toggleExpanded: (id: string) => void;
   expandTo: (id: string) => void;
   setSelectedId: (id: string | null) => void;
+  handleItemClick: (id: string, modifiers: { metaKey: boolean; shiftKey: boolean }) => void;
+  clearSelection: () => void;
+  deleteSelectedItems: () => void;
+  moveSelectedItems: (newParentId: string | null) => void;
   startRenaming: (id: string) => void;
   finishRenaming: (id: string, newName: string) => void;
   cancelRenaming: () => void;
@@ -98,6 +104,8 @@ export function createFileTreeStore() {
     // Initial state
     expandedIds: new Set<string>(),
     selectedId: null,
+    selectedIds: new Set<string>(),
+    lastClickedId: null,
     renamingId: null,
     creatingIds: new Set<string>(),
     pendingItems: [],
@@ -131,7 +139,88 @@ export function createFileTreeStore() {
     },
 
     setSelectedId: (id) => {
-      set({ selectedId: id });
+      set({
+        selectedId: id,
+        selectedIds: id ? new Set([id]) : new Set(),
+        lastClickedId: id,
+      });
+    },
+
+    handleItemClick: (id, { metaKey, shiftKey }) => {
+      const { renamingId, creatingIds, items, expandedIds, lastClickedId } = get();
+
+      // When renaming or creating, fall back to single-select
+      if (renamingId || creatingIds.size > 0) {
+        set({ selectedId: id, selectedIds: new Set([id]), lastClickedId: id });
+        return;
+      }
+
+      if (shiftKey && lastClickedId) {
+        // Range select
+        const visible = flattenVisibleTree(items, expandedIds);
+        const anchorIdx = visible.findIndex((i) => i.id === lastClickedId);
+        const targetIdx = visible.findIndex((i) => i.id === id);
+        if (anchorIdx !== -1 && targetIdx !== -1) {
+          const start = Math.min(anchorIdx, targetIdx);
+          const end = Math.max(anchorIdx, targetIdx);
+          const rangeIds = new Set(visible.slice(start, end + 1).map((i) => i.id));
+          set({ selectedId: id, selectedIds: rangeIds });
+        } else {
+          set({ selectedId: id, selectedIds: new Set([id]), lastClickedId: id });
+        }
+      } else if (metaKey) {
+        // Toggle item in/out
+        set((state) => {
+          const newIds = new Set(state.selectedIds);
+          if (newIds.has(id)) {
+            newIds.delete(id);
+          } else {
+            newIds.add(id);
+          }
+          const newSelectedId = newIds.size > 0 ? id : null;
+          return { selectedId: newSelectedId, selectedIds: newIds, lastClickedId: id };
+        });
+      } else {
+        // Normal click — single select
+        set({ selectedId: id, selectedIds: new Set([id]), lastClickedId: id });
+      }
+    },
+
+    clearSelection: () => {
+      set({ selectedId: null, selectedIds: new Set(), lastClickedId: null });
+    },
+
+    deleteSelectedItems: () => {
+      const { selectedIds } = get();
+      for (const id of selectedIds) {
+        get()._mutations?.deleteItem(id);
+      }
+      set((state) => {
+        const newExpandedIds = new Set(state.expandedIds);
+        for (const id of selectedIds) {
+          newExpandedIds.delete(id);
+        }
+        return {
+          expandedIds: newExpandedIds,
+          selectedId: null,
+          selectedIds: new Set(),
+          lastClickedId: null,
+        };
+      });
+    },
+
+    moveSelectedItems: (newParentId) => {
+      const { selectedIds, items } = get();
+      for (const id of selectedIds) {
+        if (id === newParentId) continue;
+        if (newParentId && isDescendantOf(items, newParentId, id)) continue;
+        get()._mutations?.moveItem({ itemId: id, newParentId });
+      }
+      if (newParentId) {
+        set((state) => ({
+          expandedIds: new Set([...state.expandedIds, newParentId]),
+        }));
+      }
     },
 
     startRenaming: (id) => {
@@ -239,6 +328,9 @@ export function createFileTreeStore() {
               const newPending = state.pendingItems.filter(
                 (p) => p.id !== id
               );
+              const newSelectedIds = state.selectedIds.has(id)
+                ? new Set([...state.selectedIds].map((sid) => sid === id ? dbItem.id : sid))
+                : state.selectedIds;
               return {
                 pendingItems: newPending,
                 items: computeItems(state._rows, newPending),
@@ -246,6 +338,7 @@ export function createFileTreeStore() {
                   state.renamingId === id ? dbItem.id : state.renamingId,
                 selectedId:
                   state.selectedId === id ? dbItem.id : state.selectedId,
+                selectedIds: newSelectedIds,
                 expandedIds: state.expandedIds.has(id)
                   ? new Set(
                       [...state.expandedIds].map((eid) =>
@@ -280,12 +373,15 @@ export function createFileTreeStore() {
         newCreatingIds.delete(id);
         const newExpandedIds = new Set(state.expandedIds);
         newExpandedIds.delete(id);
+        const newSelectedIds = new Set(state.selectedIds);
+        newSelectedIds.delete(id);
 
         return {
           pendingItems: newPending,
           items: computeItems(state._rows, newPending),
           creatingIds: newCreatingIds,
           expandedIds: newExpandedIds,
+          selectedIds: newSelectedIds,
           renamingId: state.renamingId === id ? null : state.renamingId,
           selectedId: state.selectedId === id ? null : state.selectedId,
         };
@@ -296,9 +392,12 @@ export function createFileTreeStore() {
       set((state) => {
         const newExpandedIds = new Set(state.expandedIds);
         newExpandedIds.delete(id);
+        const newSelectedIds = new Set(state.selectedIds);
+        newSelectedIds.delete(id);
         return {
           expandedIds: newExpandedIds,
           selectedId: state.selectedId === id ? null : state.selectedId,
+          selectedIds: newSelectedIds,
           renamingId: state.renamingId === id ? null : state.renamingId,
         };
       });

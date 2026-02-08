@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IconChevronRight, IconFolder, IconFolderOpen } from "@tabler/icons-react";
 import { MermaidIcon } from "@/components/icons/mermaid-icon";
@@ -10,7 +9,6 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
   SidebarMenuItem,
@@ -189,25 +187,27 @@ function DroppableWrapper({
 export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProps) {
   // Granular selectors — only re-render when this item's state changes
   const expanded = useFileTreeStore((s) => s.expandedIds.has(item.id));
-  const selected = useFileTreeStore((s) => s.selectedId === item.id);
+  const selected = useFileTreeStore((s) => s.selectedIds.has(item.id));
   const renaming = useFileTreeStore((s) => s.renamingId === item.id);
   const isCreating = useFileTreeStore((s) => s.creatingIds.has(item.id));
   const items = useFileTreeStore((s) => s.items);
 
   // Actions are stable references — subscribing doesn't cause re-renders
   const toggleExpanded = useFileTreeStore((s) => s.toggleExpanded);
-  const setSelectedId = useFileTreeStore((s) => s.setSelectedId);
+  const handleItemClick = useFileTreeStore((s) => s.handleItemClick);
   const finishRenaming = useFileTreeStore((s) => s.finishRenaming);
   const cancelRenaming = useFileTreeStore((s) => s.cancelRenaming);
   const confirmCreate = useFileTreeStore((s) => s.confirmCreate);
   const abortCreate = useFileTreeStore((s) => s.abortCreate);
 
   const activeId = useFileTreeDnd((s) => s.activeId);
+  const isDraggedInMulti = useFileTreeDnd((s) => s.draggedIds.has(item.id));
 
   const router = useRouter();
   const isFolder = item.type === "folder";
   const hasChildren = isFolder && item.children && item.children.length > 0;
   const isDragging = activeId === item.id;
+  const showDragOpacity = isDragging || isDraggedInMulti;
 
   const handleRenameFinish = (newName: string) => {
     if (isCreating) {
@@ -227,37 +227,38 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
     }
   };
 
-  const handleFileClick = () => {
-    setSelectedId(item.id);
-    const urlPath = getItemUrlPath(items, item.id);
-    if (urlPath) {
-      router.push(urlPath);
+  const handleFileClick = (e: React.MouseEvent) => {
+    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey;
+    handleItemClick(item.id, { metaKey: e.metaKey || e.ctrlKey, shiftKey: e.shiftKey });
+    if (!hasModifier) {
+      const urlPath = getItemUrlPath(items, item.id);
+      if (urlPath) {
+        router.push(urlPath);
+      }
     }
   };
 
-  const handleFolderToggle = () => {
-    setSelectedId(item.id);
-    toggleExpanded(item.id);
+  const handleFolderClick = (e: React.MouseEvent) => {
+    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey;
+    handleItemClick(item.id, { metaKey: e.metaKey || e.ctrlKey, shiftKey: e.shiftKey });
+    if (!hasModifier) {
+      toggleExpanded(item.id);
+    }
   };
 
   // Root level items (level 0)
   if (level === 0) {
     if (isFolder) {
       return (
-        <Collapsible open={expanded} onOpenChange={handleFolderToggle}>
+        <Collapsible open={expanded}>
           <SidebarMenuItem>
             <DroppableWrapper id={item.id} isFolder>
-              <DraggableWrapper id={item.id} className={cn(isDragging && "opacity-50")}>
+              <DraggableWrapper id={item.id} className={cn(showDragOpacity && "opacity-50")}>
                 <FileTreeContextMenu item={item}>
-                  <CollapsibleTrigger
-                    className="flex-1"
-                    nativeButton={true}
-                    render={
-                      <SidebarMenuButton
-                        isActive={selected}
-                        className={cn("group/folder", compactButton)}
-                      />
-                    }
+                  <SidebarMenuButton
+                    isActive={selected}
+                    className={cn("group/folder", compactButton)}
+                    onClick={handleFolderClick}
                   >
                     <IconChevronRight
                       className={cn(
@@ -271,7 +272,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                     ) : (
                       <span className="truncate">{item.name}</span>
                     )}
-                  </CollapsibleTrigger>
+                  </SidebarMenuButton>
                 </FileTreeContextMenu>
               </DraggableWrapper>
             </DroppableWrapper>
@@ -291,15 +292,13 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
     }
 
     // Root level file
-    const urlPath = getItemUrlPath(items, item.id);
     return (
       <SidebarMenuItem>
         <DroppableWrapper id={item.id} isFolder={false}>
-          <DraggableWrapper id={item.id} className={cn(isDragging && "opacity-50")}>
+          <DraggableWrapper id={item.id} className={cn(showDragOpacity && "opacity-50")}>
             <FileTreeContextMenu item={item}>
               <SidebarMenuButton
                 isActive={selected}
-                render={urlPath ? <Link href={urlPath} /> : undefined}
                 onClick={handleFileClick}
                 className={compactButton}
               >
@@ -321,20 +320,15 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
   // Nested items (level > 0)
   if (isFolder) {
     return (
-      <Collapsible open={expanded} onOpenChange={handleFolderToggle}>
+      <Collapsible open={expanded}>
         <SidebarMenuSubItem>
           <DroppableWrapper id={item.id} isFolder>
-            <DraggableWrapper id={item.id} className={cn(isDragging && "opacity-50")}>
+            <DraggableWrapper id={item.id} className={cn(showDragOpacity && "opacity-50")}>
               <FileTreeContextMenu item={item}>
-                <CollapsibleTrigger
-                  className="flex-1"
-                  nativeButton={false}
-                  render={
-                    <SidebarMenuSubButton
-                      isActive={selected}
-                      className={cn("group/folder", compactSubButton)}
-                    />
-                  }
+                <SidebarMenuSubButton
+                  isActive={selected}
+                  className={cn("group/folder", compactSubButton)}
+                  onClick={handleFolderClick}
                 >
                   <IconChevronRight
                     className={cn(
@@ -348,7 +342,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                   ) : (
                     <span className="truncate">{item.name}</span>
                   )}
-                </CollapsibleTrigger>
+                </SidebarMenuSubButton>
               </FileTreeContextMenu>
             </DraggableWrapper>
           </DroppableWrapper>
@@ -368,15 +362,13 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
   }
 
   // Nested file
-  const urlPath = getItemUrlPath(items, item.id);
   return (
     <SidebarMenuSubItem>
       <DroppableWrapper id={item.id} isFolder={false}>
-        <DraggableWrapper id={item.id} className={cn(isDragging && "opacity-50")}>
+        <DraggableWrapper id={item.id} className={cn(showDragOpacity && "opacity-50")}>
           <FileTreeContextMenu item={item}>
             <SidebarMenuSubButton
               isActive={selected}
-              render={urlPath ? <Link href={urlPath} /> : undefined}
               onClick={handleFileClick}
               className={compactSubButton}
             >

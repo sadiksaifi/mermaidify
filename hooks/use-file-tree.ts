@@ -25,14 +25,14 @@ export function useFileTree() {
       },
 
       isSelected: (id: string) => {
-        return store.selectedId === id;
+        return store.selectedIds.has(id);
       },
 
       isRenaming: (id: string) => {
         return store.renamingId === id;
       },
     }),
-    [store.items, store.expandedIds, store.selectedId, store.renamingId]
+    [store.items, store.expandedIds, store.selectedIds, store.renamingId]
   );
 
   return {

@@ -1,6 +1,44 @@
 import type { FileTreeItem } from "./types";
 
 /**
+ * Return a flat ordered list of visible items (items inside collapsed folders are excluded).
+ * Used for shift+click range selection.
+ */
+export function flattenVisibleTree(
+  items: FileTreeItem[],
+  expandedIds: Set<string>
+): FileTreeItem[] {
+  const result: FileTreeItem[] = [];
+  for (const item of items) {
+    result.push(item);
+    if (item.type === "folder" && expandedIds.has(item.id) && item.children) {
+      result.push(...flattenVisibleTree(item.children, expandedIds));
+    }
+  }
+  return result;
+}
+
+/**
+ * Returns true if candidateId is nested inside ancestorId.
+ * Used to prevent circular moves (moving a folder into its own descendant).
+ */
+export function isDescendantOf(
+  items: FileTreeItem[],
+  candidateId: string,
+  ancestorId: string
+): boolean {
+  const ancestor = findItemById(items, ancestorId);
+  if (!ancestor || !ancestor.children) return false;
+  for (const child of ancestor.children) {
+    if (child.id === candidateId) return true;
+    if (child.children && isDescendantOf([child], candidateId, child.id)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Slugify a name for URL usage
  */
 export function slugify(name: string): string {

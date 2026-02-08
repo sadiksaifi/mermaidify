@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { IconPlus, IconFolder } from "@tabler/icons-react";
 import { MermaidIcon } from "@/components/icons/mermaid-icon";
 
@@ -15,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDroppable } from "@dnd-kit/core";
 import { SidebarFileTreeItem } from "./sidebar-file-tree-item";
 import { useFileTree } from "@/hooks/use-file-tree";
+import { useFileTreeStore } from "@/contexts/file-tree-context";
 import { FileTreeDndProvider, ROOT_DROPPABLE_ID, useFileTreeDnd } from "@/hooks/use-file-tree-dnd";
 import { cn } from "@/lib/utils";
 import {
@@ -26,12 +28,14 @@ import {
 
 function RootDropZone() {
   const activeId = useFileTreeDnd((s) => s.activeId);
+  const clearSelection = useFileTreeStore((s) => s.clearSelection);
   const { setNodeRef, isOver } = useDroppable({ id: ROOT_DROPPABLE_ID });
   const showIndicator = isOver && activeId;
 
   return (
     <div
       ref={setNodeRef}
+      onClick={clearSelection}
       className={cn(
         "flex-1 min-h-8",
         showIndicator && "bg-sidebar-accent/50 ring-1 ring-dashed ring-sidebar-ring rounded-[3px] m-1"
@@ -42,6 +46,17 @@ function RootDropZone() {
 
 export function SidebarFileTree() {
   const { items, createFile, createFolder } = useFileTree();
+  const clearSelection = useFileTreeStore((s) => s.clearSelection);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        clearSelection();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [clearSelection]);
 
   return (
     <SidebarContent>

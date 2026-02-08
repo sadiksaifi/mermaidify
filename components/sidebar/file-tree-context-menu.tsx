@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuAction } from "@/components/ui/sidebar";
 import { FileTreeMenuItems } from "./file-tree-menu-items";
+import { MultiSelectMenuItems } from "./file-tree-multi-select-menu-items";
+import { useFileTreeStore } from "@/contexts/file-tree-context";
 import { cn } from "@/lib/utils";
 import type { FileTreeItem } from "@/lib/types";
 
@@ -33,17 +35,41 @@ export function FileTreeContextMenu({
   item,
   children,
 }: FileTreeContextMenuProps) {
+  const selectedIds = useFileTreeStore((s) => s.selectedIds);
+  const setSelectedId = useFileTreeStore((s) => s.setSelectedId);
+
+  const isMultiSelected = selectedIds.size > 1 && selectedIds.has(item.id);
+
+  const handleContextMenu = () => {
+    // If right-clicking an unselected item, clear selection and select just this item
+    if (!selectedIds.has(item.id)) {
+      setSelectedId(item.id);
+    }
+  };
+
   return (
     <ContextMenu>
-      <ContextMenuTrigger className="flex-1">{children}</ContextMenuTrigger>
+      <ContextMenuTrigger className="flex-1" onContextMenu={handleContextMenu}>
+        {children}
+      </ContextMenuTrigger>
       <ContextMenuContent className={compactMenuContent}>
-        <FileTreeMenuItems
-          item={item}
-          MenuItem={({ className, ...props }) => (
-            <ContextMenuItem className={cn(compactMenuItem, className)} {...props} />
-          )}
-          MenuSeparator={ContextMenuSeparator}
-        />
+        {isMultiSelected ? (
+          <MultiSelectMenuItems
+            count={selectedIds.size}
+            MenuItem={({ className, ...props }) => (
+              <ContextMenuItem className={cn(compactMenuItem, className)} {...props} />
+            )}
+            MenuSeparator={ContextMenuSeparator}
+          />
+        ) : (
+          <FileTreeMenuItems
+            item={item}
+            MenuItem={({ className, ...props }) => (
+              <ContextMenuItem className={cn(compactMenuItem, className)} {...props} />
+            )}
+            MenuSeparator={ContextMenuSeparator}
+          />
+        )}
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -58,6 +84,9 @@ export function FileTreeItemActions({
   item,
   isSubItem = false,
 }: FileTreeItemActionsProps) {
+  const selectedIds = useFileTreeStore((s) => s.selectedIds);
+  const isMultiSelected = selectedIds.size > 1 && selectedIds.has(item.id);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -82,13 +111,23 @@ export function FileTreeItemActions({
         align="start"
         className={compactMenuContent}
       >
-        <FileTreeMenuItems
-          item={item}
-          MenuItem={({ className, ...props }) => (
-            <DropdownMenuItem className={cn(compactMenuItem, className)} {...props} />
-          )}
-          MenuSeparator={DropdownMenuSeparator}
-        />
+        {isMultiSelected ? (
+          <MultiSelectMenuItems
+            count={selectedIds.size}
+            MenuItem={({ className, ...props }) => (
+              <DropdownMenuItem className={cn(compactMenuItem, className)} {...props} />
+            )}
+            MenuSeparator={DropdownMenuSeparator}
+          />
+        ) : (
+          <FileTreeMenuItems
+            item={item}
+            MenuItem={({ className, ...props }) => (
+              <DropdownMenuItem className={cn(compactMenuItem, className)} {...props} />
+            )}
+            MenuSeparator={DropdownMenuSeparator}
+          />
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
