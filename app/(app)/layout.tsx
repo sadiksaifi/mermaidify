@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FileTreeProvider } from "@/contexts/file-tree-context";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { CommandPalette } from "@/components/command-palette";
 import { useAuth } from "@/features/auth/query";
 
 function getSidebarWidthCookie(): number | undefined {
@@ -40,6 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <SidebarInset>{children}</SidebarInset>
       </SidebarProvider>
+      <CommandPalette />
     </FileTreeProvider>
   );
 }

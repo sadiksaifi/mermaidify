@@ -38,7 +38,12 @@ export function SidebarHeaderSection() {
 
         {/* Search */}
         <SidebarMenuItem>
-          <SidebarMenuButton tooltip="Search">
+          <SidebarMenuButton
+            tooltip="Search"
+            onClick={() =>
+              document.dispatchEvent(new Event("open-command-palette"))
+            }
+          >
             <IconSearch />
             <span>Search</span>
             <Kbd className="ml-auto">
