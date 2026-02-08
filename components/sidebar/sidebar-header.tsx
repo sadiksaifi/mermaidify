@@ -49,7 +49,7 @@ export function SidebarHeaderSection() {
 
         {/* Inbox */}
         <SidebarMenuItem>
-          <SidebarMenuButton tooltip="Inbox">
+          <SidebarMenuButton render={<Link href="/inbox" />} tooltip="Inbox">
             <IconInbox />
             <span>Inbox</span>
           </SidebarMenuButton>

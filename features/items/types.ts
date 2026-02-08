@@ -3,6 +3,7 @@ export interface FileTreeRow {
   parentId: string | null;
   name: string;
   isFolder: boolean;
+  updatedAt: string;
 }
 
 export interface CreateItemInput {

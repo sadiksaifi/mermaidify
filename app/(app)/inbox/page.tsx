@@ -1,5 +1,3 @@
-"use client";
-
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -8,10 +6,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
-import { TemplateStrip } from "@/components/home/template-strip";
-import { RecentFilesSection } from "@/components/home/recent-files-section";
+import { IconInbox } from "@tabler/icons-react";
 
-export default function Page() {
+export default function InboxPage() {
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -20,17 +17,18 @@ export default function Page() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbPage>Home</BreadcrumbPage>
+              <BreadcrumbPage>Inbox</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </header>
-      <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-5xl space-y-10 px-6 py-8">
-          <TemplateStrip />
-          <RecentFilesSection />
-        </div>
-      </main>
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+        <IconInbox className="size-12 text-muted-foreground/50" aria-hidden="true" />
+        <h2 className="text-lg font-semibold">No notifications</h2>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          When you receive notifications, they&apos;ll appear here.
+        </p>
+      </div>
     </>
   );
 }

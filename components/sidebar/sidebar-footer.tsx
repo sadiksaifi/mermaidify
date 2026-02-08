@@ -92,7 +92,10 @@ export function SidebarFooterSection({ user }: { user: UserData | null }) {
                 <ModeToggle />
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className={compactMenuItem}>
+              <DropdownMenuItem
+                className={compactMenuItem}
+                onClick={() => router.push("/settings")}
+              >
                 <IconSettings />
                 <span>Settings</span>
               </DropdownMenuItem>

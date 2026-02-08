@@ -1,7 +1,8 @@
 import { db } from "@/db";
 import { items, fileContents, fileVersions } from "@/db/schema";
-import { eq, and, asc, desc } from "drizzle-orm";
+import { eq, and, asc, desc, count } from "drizzle-orm";
 import type { FileTreeRow, FileContent } from "./types";
+import { DEFAULT_FILE_CONTENT } from "@/lib/templates";
 import {
   createItemSchema,
   renameItemSchema,
@@ -12,16 +13,19 @@ import {
 } from "./validation";
 
 export async function listItems(userId: string): Promise<FileTreeRow[]> {
-  return db
+  const rows = await db
     .select({
       id: items.id,
       parentId: items.parentId,
       name: items.name,
       isFolder: items.isFolder,
+      updatedAt: items.updatedAt,
     })
     .from(items)
     .where(eq(items.userId, userId))
     .orderBy(desc(items.isFolder), asc(items.name));
+
+  return rows.map((r) => ({ ...r, updatedAt: r.updatedAt.toISOString() }));
 }
 
 export async function createItem(
@@ -33,7 +37,7 @@ export async function createItem(
     ? data.name
     : ensureMmdExtension(data.name);
 
-  const [newItem] = await db
+  const [row] = await db
     .insert(items)
     .values({
       userId,
@@ -46,16 +50,17 @@ export async function createItem(
       parentId: items.parentId,
       name: items.name,
       isFolder: items.isFolder,
+      updatedAt: items.updatedAt,
     });
 
   if (!data.isFolder) {
     await db.insert(fileContents).values({
-      itemId: newItem.id,
+      itemId: row.id,
       content: "",
     });
   }
 
-  return newItem;
+  return { ...row, updatedAt: row.updatedAt.toISOString() };
 }
 
 export async function renameItem(
@@ -146,7 +151,7 @@ export async function duplicateItem(
     counter++;
   }
 
-  const [newItem] = await db
+  const [dupRow] = await db
     .insert(items)
     .values({
       userId,
@@ -159,6 +164,7 @@ export async function duplicateItem(
       parentId: items.parentId,
       name: items.name,
       isFolder: items.isFolder,
+      updatedAt: items.updatedAt,
     });
 
   // Copy content
@@ -169,11 +175,11 @@ export async function duplicateItem(
     .limit(1);
 
   await db.insert(fileContents).values({
-    itemId: newItem.id,
+    itemId: dupRow.id,
     content: content?.content ?? "",
   });
 
-  return newItem;
+  return { ...dupRow, updatedAt: dupRow.updatedAt.toISOString() };
 }
 
 export async function getFileContent(
@@ -238,6 +244,11 @@ export async function saveFileContent(
     });
   }
 
+  await db
+    .update(items)
+    .set({ updatedAt: new Date() })
+    .where(and(eq(items.id, id), eq(items.userId, userId)));
+
   if (current) {
     await db
       .update(fileContents)
@@ -249,4 +260,28 @@ export async function saveFileContent(
       content,
     });
   }
+}
+
+export async function ensureDefaultFile(userId: string): Promise<void> {
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(items)
+    .where(eq(items.userId, userId));
+
+  if (total > 0) return;
+
+  const [newItem] = await db
+    .insert(items)
+    .values({
+      userId,
+      parentId: null,
+      name: "Untitled.mmd",
+      isFolder: false,
+    })
+    .returning({ id: items.id });
+
+  await db.insert(fileContents).values({
+    itemId: newItem.id,
+    content: DEFAULT_FILE_CONTENT,
+  });
 }

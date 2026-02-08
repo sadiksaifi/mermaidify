@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/api-utils";
-import { listItems, createItem } from "@/features/items/api";
+import { listItems, createItem, ensureDefaultFile } from "@/features/items/api";
 
 export async function GET() {
   const { user, errorResponse } = await getAuthenticatedUser();
   if (errorResponse) return errorResponse;
 
-  const rows = await listItems(user.id);
+  let rows = await listItems(user.id);
+
+  if (rows.length === 0) {
+    await ensureDefaultFile(user.id);
+    rows = await listItems(user.id);
+  }
+
   return NextResponse.json(rows);
 }
 

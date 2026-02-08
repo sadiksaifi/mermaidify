@@ -176,6 +176,7 @@ export function useSaveFileContentMutation() {
     }) => saveFileContent(itemId, { content }),
     onSettled: (_data, _err, { itemId }) => {
       queryClient.invalidateQueries({ queryKey: itemKeys.content(itemId) });
+      queryClient.invalidateQueries({ queryKey: itemKeys.list() });
     },
   });
 }
