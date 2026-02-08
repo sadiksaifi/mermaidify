@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { IconSettings, IconLogout, IconChevronUp } from "@tabler/icons-react";
+import { IconSettings, IconLogout, IconDotsVertical } from "@tabler/icons-react";
 
 import {
   SidebarFooter as SidebarFooterPrimitive,
@@ -64,7 +64,7 @@ export function SidebarFooterSection({ user }: { user: UserData | null }) {
                       {user.email}
                     </span>
                   </div>
-                  <IconChevronUp className="ml-auto size-4" />
+                  <IconDotsVertical className="ml-auto size-4" />
                 </SidebarMenuButton>
               }
             />
