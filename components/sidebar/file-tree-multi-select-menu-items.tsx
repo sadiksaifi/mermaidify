@@ -1,9 +1,6 @@
 "use client";
 
-import * as React from "react";
 import { IconTrash, IconFolderShare } from "@tabler/icons-react";
-import { BulkDeleteDialog } from "./bulk-delete-dialog";
-import { MoveToDialog } from "./move-to-dialog";
 
 interface MultiSelectMenuItemsProps {
   count: number;
@@ -15,6 +12,8 @@ interface MultiSelectMenuItemsProps {
   }>;
   MenuSeparator: React.ComponentType<{ className?: string }>;
   onAction?: () => void;
+  onMoveToClick: () => void;
+  onDeleteClick: () => void;
 }
 
 export function MultiSelectMenuItems({
@@ -22,16 +21,15 @@ export function MultiSelectMenuItems({
   MenuItem,
   MenuSeparator,
   onAction,
+  onMoveToClick,
+  onDeleteClick,
 }: MultiSelectMenuItemsProps) {
-  const [showMoveDialog, setShowMoveDialog] = React.useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
-
   return (
     <>
       <MenuItem
         onClick={() => {
           onAction?.();
-          setShowMoveDialog(true);
+          onMoveToClick();
         }}
       >
         <IconFolderShare />
@@ -42,18 +40,12 @@ export function MultiSelectMenuItems({
         variant="destructive"
         onClick={() => {
           onAction?.();
-          setShowDeleteDialog(true);
+          onDeleteClick();
         }}
       >
         <IconTrash />
         <span>Delete {count} items</span>
       </MenuItem>
-      <MoveToDialog open={showMoveDialog} onOpenChange={setShowMoveDialog} />
-      <BulkDeleteDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        count={count}
-      />
     </>
   );
 }
