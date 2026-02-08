@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   IconPencil,
   IconTrash,
@@ -32,6 +33,7 @@ export function FileTreeMenuItems({
   MenuSeparator,
   onAction,
 }: FileTreeMenuItemsProps) {
+  const router = useRouter();
   const startRenaming = useFileTreeStore((s) => s.startRenaming);
   const deleteItem = useFileTreeStore((s) => s.deleteItem);
   const createFile = useFileTreeStore((s) => s.createFile);
@@ -100,7 +102,13 @@ export function FileTreeMenuItems({
         </>
       )}
       <MenuSeparator />
-      <MenuItem onClick={wrap(() => deleteItem(item.id))} variant="destructive">
+      <MenuItem
+        onClick={wrap(() => {
+          router.push("/");
+          deleteItem(item.id);
+        })}
+        variant="destructive"
+      >
         <IconTrash />
         <span>Delete</span>
       </MenuItem>
