@@ -6,6 +6,8 @@ import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
 import initMermaid from "monaco-mermaid";
 import { useMermaidLinter } from "@/hooks/use-mermaid-linter";
+import { useSettingsQuery } from "@/features/settings/query";
+import { DEFAULT_SETTINGS } from "@/features/settings/constants";
 
 interface MermaidEditorProps {
   defaultValue: string;
@@ -18,6 +20,8 @@ const handleBeforeMount: BeforeMount = (monaco) => {
 
 export function MermaidEditor({ defaultValue, onChange }: MermaidEditorProps) {
   const { resolvedTheme } = useTheme();
+  const { data: settings } = useSettingsQuery();
+  const s = settings ?? DEFAULT_SETTINGS;
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof Monaco | null>(null);
   const { validate } = useMermaidLinter(editorRef, monacoRef);
@@ -54,11 +58,12 @@ export function MermaidEditor({ defaultValue, onChange }: MermaidEditorProps) {
       }
       options={{
         automaticLayout: true,
-        minimap: { enabled: false },
-        wordWrap: "on",
+        minimap: { enabled: s.editorMinimap },
+        wordWrap: s.editorWordWrap ? "on" : "off",
         scrollBeyondLastLine: false,
-        fontSize: 14,
-        tabSize: 2,
+        fontSize: s.editorFontSize,
+        tabSize: s.editorTabSize,
+        lineNumbers: s.editorLineNumbers ? "on" : "off",
         padding: { top: 16, bottom: 16 },
       }}
     />

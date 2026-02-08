@@ -12,6 +12,8 @@ import {
 } from "@tabler/icons-react";
 import { MermaidIcon } from "@/components/icons/mermaid-icon";
 import { useFileTreeStore } from "@/contexts/file-tree-context";
+import { useSettingsQuery } from "@/features/settings/query";
+import { DEFAULT_SETTINGS } from "@/features/settings/constants";
 import { downloadMmd, exportSvg, exportPng } from "@/lib/export-utils";
 import type { FileTreeItem } from "@/lib/types";
 
@@ -39,6 +41,8 @@ export function FileTreeMenuItems({
   const createFile = useFileTreeStore((s) => s.createFile);
   const createFolder = useFileTreeStore((s) => s.createFolder);
   const duplicateItem = useFileTreeStore((s) => s.duplicateItem);
+  const { data: settings } = useSettingsQuery();
+  const s = settings ?? DEFAULT_SETTINGS;
 
   const isFolder = item.type === "folder";
 
@@ -91,11 +95,11 @@ export function FileTreeMenuItems({
             <IconDownload />
             <span>Download .mmd</span>
           </MenuItem>
-          <MenuItem onClick={wrap(() => exportSvg(item.id, item.name))}>
+          <MenuItem onClick={wrap(() => exportSvg(item.id, item.name, s.mermaidTheme, s.mermaidLook))}>
             <IconFileTypeSvg />
             <span>Export as SVG</span>
           </MenuItem>
-          <MenuItem onClick={wrap(() => exportPng(item.id, item.name))}>
+          <MenuItem onClick={wrap(() => exportPng(item.id, item.name, s.mermaidTheme, s.mermaidLook))}>
             <IconPhoto />
             <span>Export as PNG</span>
           </MenuItem>

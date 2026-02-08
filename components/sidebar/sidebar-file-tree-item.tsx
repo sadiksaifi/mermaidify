@@ -22,6 +22,7 @@ import { useFileTreeStore } from "@/contexts/file-tree-context";
 import { useFileTreeDnd } from "@/hooks/use-file-tree-dnd";
 import { getItemUrlPath } from "@/lib/file-tree-utils";
 import { cn } from "@/lib/utils";
+import { useSettingsQuery } from "@/features/settings/query";
 import type { FileTreeItem } from "@/lib/types";
 
 // Compact styling overrides — VS Code / Notion-like flat rows
@@ -202,9 +203,15 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
 
   const activeId = useFileTreeDnd((s) => s.activeId);
   const isDraggedInMulti = useFileTreeDnd((s) => s.draggedIds.has(item.id));
+  const { data: settings } = useSettingsQuery();
+  const showExtensions = settings?.showFileExtensions ?? false;
 
   const router = useRouter();
   const isFolder = item.type === "folder";
+  const displayName =
+    isFolder || showExtensions
+      ? item.name
+      : item.name.replace(/\.mmd$/, "");
   const hasChildren = isFolder && item.children && item.children.length > 0;
   const isDragging = activeId === item.id;
   const showDragOpacity = isDragging || isDraggedInMulti;
@@ -270,7 +277,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                     {renaming ? (
                       <RenameInput item={item} isCreating={isCreating} onFinish={handleRenameFinish} onCancel={handleRenameCancel} />
                     ) : (
-                      <span className="truncate">{item.name}</span>
+                      <span className="truncate">{displayName}</span>
                     )}
                   </SidebarMenuButton>
                 </FileTreeContextMenu>
@@ -306,7 +313,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                 {renaming ? (
                   <RenameInput item={item} isCreating={isCreating} onFinish={handleRenameFinish} onCancel={handleRenameCancel} />
                 ) : (
-                  <span className="truncate">{item.name}</span>
+                  <span className="truncate">{displayName}</span>
                 )}
               </SidebarMenuButton>
             </FileTreeContextMenu>
@@ -340,7 +347,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
                   {renaming ? (
                     <RenameInput item={item} isCreating={isCreating} onFinish={handleRenameFinish} onCancel={handleRenameCancel} />
                   ) : (
-                    <span className="truncate">{item.name}</span>
+                    <span className="truncate">{displayName}</span>
                   )}
                 </SidebarMenuSubButton>
               </FileTreeContextMenu>
@@ -376,7 +383,7 @@ export function SidebarFileTreeItem({ item, level = 0 }: SidebarFileTreeItemProp
               {renaming ? (
                 <RenameInput item={item} isCreating={isCreating} onFinish={handleRenameFinish} onCancel={handleRenameCancel} />
               ) : (
-                <span className="truncate">{item.name}</span>
+                <span className="truncate">{displayName}</span>
               )}
             </SidebarMenuSubButton>
           </FileTreeContextMenu>

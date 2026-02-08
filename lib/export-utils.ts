@@ -1,3 +1,5 @@
+import type { MermaidConfig } from "mermaid";
+
 function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -17,13 +19,18 @@ export async function downloadMmd(itemId: string, fileName: string) {
   triggerDownload(blob, fileName.endsWith(".mmd") ? fileName : `${fileName}.mmd`);
 }
 
-export async function exportSvg(itemId: string, fileName: string) {
+export async function exportSvg(
+  itemId: string,
+  fileName: string,
+  theme: MermaidConfig["theme"] = "default",
+  look: MermaidConfig["look"] = "classic",
+) {
   const res = await fetch(`/api/items/${itemId}/content`);
   if (!res.ok) throw new Error("Failed to fetch file content");
   const { content } = (await res.json()) as { content: string };
 
   const mermaid = (await import("mermaid")).default;
-  mermaid.initialize({ startOnLoad: false, theme: "default" });
+  mermaid.initialize({ startOnLoad: false, theme, look });
   const { svg } = await mermaid.render(`export-${Date.now()}`, content);
 
   const blob = new Blob([svg], { type: "image/svg+xml" });
@@ -31,13 +38,18 @@ export async function exportSvg(itemId: string, fileName: string) {
   triggerDownload(blob, `${stem}.svg`);
 }
 
-export async function exportPng(itemId: string, fileName: string) {
+export async function exportPng(
+  itemId: string,
+  fileName: string,
+  theme: MermaidConfig["theme"] = "default",
+  look: MermaidConfig["look"] = "classic",
+) {
   const res = await fetch(`/api/items/${itemId}/content`);
   if (!res.ok) throw new Error("Failed to fetch file content");
   const { content } = (await res.json()) as { content: string };
 
   const mermaid = (await import("mermaid")).default;
-  mermaid.initialize({ startOnLoad: false, theme: "default" });
+  mermaid.initialize({ startOnLoad: false, theme, look });
   const { svg } = await mermaid.render(`export-png-${Date.now()}`, content);
 
   const scale = 2;

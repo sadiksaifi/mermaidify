@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
+import { useSettingsQuery } from "@/features/settings/query";
+import { DEFAULT_SETTINGS } from "@/features/settings/constants";
 
 const DEBOUNCE_MS = 300;
 
@@ -13,6 +15,8 @@ interface MermaidRendererResult {
 
 export function useMermaidRenderer(code: string): MermaidRendererResult {
   const { resolvedTheme } = useTheme();
+  const { data: settings } = useSettingsQuery();
+  const s = settings ?? DEFAULT_SETTINGS;
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRendering, setIsRendering] = useState(false);
@@ -22,15 +26,26 @@ export function useMermaidRenderer(code: string): MermaidRendererResult {
     undefined,
   );
   const counterRef = useRef(0);
-  const initializedThemeRef = useRef<string | undefined>(undefined);
+  const initializedConfigRef = useRef<string | undefined>(undefined);
+
+  const mermaidTheme = s.mermaidTheme;
+  const mermaidLook = s.mermaidLook;
+
+  // Build a config key to detect when re-init is needed
+  const configKey = `${resolvedTheme}-${mermaidTheme}-${mermaidLook}`;
 
   const initMermaid = useCallback(
     async (mermaid: typeof import("mermaid").default) => {
-      const theme = resolvedTheme === "dark" ? "dark" : "default";
-      mermaid.initialize({ startOnLoad: false, theme });
-      initializedThemeRef.current = resolvedTheme;
+      const theme =
+        mermaidTheme === "default"
+          ? resolvedTheme === "dark"
+            ? "dark"
+            : "default"
+          : mermaidTheme;
+      mermaid.initialize({ startOnLoad: false, theme, look: mermaidLook });
+      initializedConfigRef.current = configKey;
     },
-    [resolvedTheme],
+    [resolvedTheme, mermaidTheme, mermaidLook, configKey],
   );
 
   // Lazy-load mermaid on mount
@@ -63,8 +78,8 @@ export function useMermaidRenderer(code: string): MermaidRendererResult {
         const mermaid = mermaidRef.current;
         if (!mermaid) return;
 
-        // Re-initialize if theme changed
-        if (initializedThemeRef.current !== resolvedTheme) {
+        // Re-initialize if theme or settings changed
+        if (initializedConfigRef.current !== configKey) {
           await initMermaid(mermaid);
         }
 
@@ -88,10 +103,10 @@ export function useMermaidRenderer(code: string): MermaidRendererResult {
         }
       }, DEBOUNCE_MS);
     },
-    [resolvedTheme, initMermaid],
+    [configKey, initMermaid],
   );
 
-  // Render when code or theme changes
+  // Render when code, theme, or settings change
   useEffect(() => {
     render(code);
   }, [code, render]);

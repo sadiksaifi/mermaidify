@@ -7,6 +7,7 @@ import {
   integer,
   uniqueIndex,
   foreignKey,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -62,6 +63,15 @@ export const fileVersions = pgTable("file_versions", {
   content: text("content").notNull(),
   version: integer("version").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ---------------------------------------------------------------------------
+// User Preferences — single JSONB column for all settings
+// ---------------------------------------------------------------------------
+export const userPreferences = pgTable("user_preferences", {
+  userId: uuid("user_id").primaryKey(),
+  preferences: jsonb("preferences").notNull().default({}),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // ---------------------------------------------------------------------------
