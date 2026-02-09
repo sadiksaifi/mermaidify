@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mermaid Viewer",
+  title: "Mermaidify",
   description: "A Notion-like file viewer",
 };
 

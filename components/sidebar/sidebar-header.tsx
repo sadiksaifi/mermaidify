@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Kbd } from "@/components/ui/kbd";
+import { MermaidIcon } from "@/components/icons/mermaid-icon";
 
 export function SidebarHeaderSection() {
   return (
@@ -18,11 +19,11 @@ export function SidebarHeaderSection() {
         {/* Brand / Logo */}
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" render={<Link href="/" />} className="hover:bg-transparent active:bg-transparent">
-            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-              <span className="text-sm font-bold">M</span>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[5px] bg-[#ff3670]">
+              <MermaidIcon className="size-5" leafColor="#ffffff" />
             </div>
             <div className="grid flex-1 text-left leading-tight">
-              <span className="truncate font-semibold">Mermaid Viewer</span>
+              <span className="truncate font-semibold">Mermaidify</span>
               <span className="truncate text-xs text-muted-foreground">Workspace</span>
             </div>
           </SidebarMenuButton>
