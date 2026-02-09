@@ -1,6 +1,10 @@
 import type { MermaidConfig } from "mermaid";
 import { deflate } from "pako";
 
+export interface ExportPngOptions {
+  background?: "transparent" | "white";
+}
+
 function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -55,6 +59,7 @@ async function exportPngUsingRenderer(
   fileName: string,
   theme: MermaidConfig["theme"],
   look: MermaidConfig["look"],
+  options: ExportPngOptions = {},
   size?: { width: number; height: number; scale: number },
 ) {
   const res = await fetch(getRendererSvgUrl(content, theme, look));
@@ -66,6 +71,7 @@ async function exportPngUsingRenderer(
     svg,
     size?.scale ?? 3,
     true,
+    options.background ?? "transparent",
     size ? { width: size.width, height: size.height } : undefined,
   );
   const stem = fileName.replace(/\.mmd$/, "");
@@ -220,6 +226,7 @@ async function rasterizeSvgToPngBlob(
   svg: string,
   scale = 2,
   forceEdgeLabelContrast = false,
+  background: "transparent" | "white" = "transparent",
   sizeOverride?: { width: number; height: number },
 ) {
   const prepared = serializeForRasterization(
@@ -233,6 +240,10 @@ async function rasterizeSvgToPngBlob(
   canvas.width = width * scale;
   canvas.height = height * scale;
   const ctx = canvas.getContext("2d")!;
+  if (background === "white") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
   ctx.scale(scale, scale);
 
   const img = new Image();
@@ -336,6 +347,7 @@ export async function exportPng(
   fileName: string,
   theme: MermaidConfig["theme"] = "default",
   look: MermaidConfig["look"] = "classic",
+  options: ExportPngOptions = {},
 ) {
   const res = await fetch(`/api/items/${itemId}/content`);
   if (!res.ok) throw new Error("Failed to fetch file content");
@@ -351,7 +363,14 @@ export async function exportPng(
   const rendererSize = getHiResRendererSize(getSvgDimensionsFromMarkup(sizingSvg));
 
   try {
-    await exportPngUsingRenderer(content, fileName, theme, look, rendererSize);
+    await exportPngUsingRenderer(
+      content,
+      fileName,
+      theme,
+      look,
+      options,
+      rendererSize,
+    );
     return;
   } catch {
     // fall back to client-side rasterization when remote renderer is unavailable
@@ -366,7 +385,12 @@ export async function exportPng(
       content,
       getBaseConfig(theme, look),
     );
-    const blob = await rasterizeSvgToPngBlob(normalSvg, 2);
+    const blob = await rasterizeSvgToPngBlob(
+      normalSvg,
+      2,
+      false,
+      options.background ?? "transparent",
+    );
     triggerDownload(blob, `${stem}.png`);
     return;
   } catch (error) {
@@ -381,7 +405,12 @@ export async function exportPng(
     content,
     getPngExportConfig(theme, look),
   );
-  const blob = await rasterizeSvgToPngBlob(safeSvg, 2, true);
+  const blob = await rasterizeSvgToPngBlob(
+    safeSvg,
+    2,
+    true,
+    options.background ?? "transparent",
+  );
 
   triggerDownload(blob, `${stem}.png`);
 }

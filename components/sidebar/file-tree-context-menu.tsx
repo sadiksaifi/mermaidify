@@ -22,6 +22,7 @@ import { FileTreeMenuItems } from "./file-tree-menu-items";
 import { MultiSelectMenuItems } from "./file-tree-multi-select-menu-items";
 import { BulkDeleteDialog } from "./bulk-delete-dialog";
 import { MoveToDialog } from "./move-to-dialog";
+import { ExportPngDialog, type ExportPngRequest } from "./export-png-dialog";
 import { useFileTreeStore } from "@/contexts/file-tree-context";
 import { cn } from "@/lib/utils";
 import type { FileTreeItem } from "@/lib/types";
@@ -42,6 +43,8 @@ export function FileTreeContextMenu({
   const setSelectedId = useFileTreeStore((s) => s.setSelectedId);
   const [showMoveDialog, setShowMoveDialog] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [exportPngRequest, setExportPngRequest] =
+    React.useState<ExportPngRequest | null>(null);
 
   const isMultiSelected = selectedIds.size > 1 && selectedIds.has(item.id);
 
@@ -76,6 +79,7 @@ export function FileTreeContextMenu({
                 <ContextMenuItem className={cn(compactMenuItem, className)} {...props} />
               )}
               MenuSeparator={ContextMenuSeparator}
+              onExportPngClick={setExportPngRequest}
             />
           )}
         </ContextMenuContent>
@@ -85,6 +89,13 @@ export function FileTreeContextMenu({
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         count={selectedIds.size}
+      />
+      <ExportPngDialog
+        open={!!exportPngRequest}
+        onOpenChange={(open) => {
+          if (!open) setExportPngRequest(null);
+        }}
+        request={exportPngRequest}
       />
     </>
   );
@@ -103,6 +114,8 @@ export function FileTreeItemActions({
   const isMultiSelected = selectedIds.size > 1 && selectedIds.has(item.id);
   const [showMoveDialog, setShowMoveDialog] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [exportPngRequest, setExportPngRequest] =
+    React.useState<ExportPngRequest | null>(null);
 
   return (
     <>
@@ -146,6 +159,7 @@ export function FileTreeItemActions({
                 <DropdownMenuItem className={cn(compactMenuItem, className)} {...props} />
               )}
               MenuSeparator={DropdownMenuSeparator}
+              onExportPngClick={setExportPngRequest}
             />
           )}
         </DropdownMenuContent>
@@ -155,6 +169,13 @@ export function FileTreeItemActions({
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         count={selectedIds.size}
+      />
+      <ExportPngDialog
+        open={!!exportPngRequest}
+        onOpenChange={(open) => {
+          if (!open) setExportPngRequest(null);
+        }}
+        request={exportPngRequest}
       />
     </>
   );

@@ -16,6 +16,7 @@ import { useSettingsQuery } from "@/features/settings/query";
 import { DEFAULT_SETTINGS } from "@/features/settings/constants";
 import { downloadMmd, exportSvg, exportPng } from "@/lib/export-utils";
 import type { FileTreeItem } from "@/lib/types";
+import type { ExportPngRequest } from "./export-png-dialog";
 
 interface FileTreeMenuItemsProps {
   item: FileTreeItem;
@@ -27,6 +28,7 @@ interface FileTreeMenuItemsProps {
   }>;
   MenuSeparator: React.ComponentType<{ className?: string }>;
   onAction?: () => void;
+  onExportPngClick?: (request: ExportPngRequest) => void;
 }
 
 export function FileTreeMenuItems({
@@ -34,6 +36,7 @@ export function FileTreeMenuItems({
   MenuItem,
   MenuSeparator,
   onAction,
+  onExportPngClick,
 }: FileTreeMenuItemsProps) {
   const router = useRouter();
   const startRenaming = useFileTreeStore((s) => s.startRenaming);
@@ -99,7 +102,20 @@ export function FileTreeMenuItems({
             <IconFileTypeSvg />
             <span>Export as SVG</span>
           </MenuItem>
-          <MenuItem onClick={wrap(() => exportPng(item.id, item.name, s.mermaidTheme, s.mermaidLook))}>
+          <MenuItem
+            onClick={wrap(() => {
+              if (onExportPngClick) {
+                onExportPngClick({
+                  itemId: item.id,
+                  fileName: item.name,
+                  theme: s.mermaidTheme,
+                  look: s.mermaidLook,
+                });
+                return;
+              }
+              void exportPng(item.id, item.name, s.mermaidTheme, s.mermaidLook);
+            })}
+          >
             <IconPhoto />
             <span>Export as PNG</span>
           </MenuItem>
