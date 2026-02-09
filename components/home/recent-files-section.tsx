@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { IconFile, IconFileOff } from "@tabler/icons-react";
+import { IconFile, IconFileOff, IconSearch } from "@tabler/icons-react";
 import { useFileTreeStore } from "@/contexts/file-tree-context";
 import { getItemUrlPath } from "@/lib/file-tree-utils";
 import { formatRelativeTime } from "@/lib/format-relative-time";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 
 type SortMode = "modified" | "name";
 
@@ -46,38 +47,49 @@ export function RecentFilesSection() {
 
   return (
     <section>
-      <div className="mb-4 flex items-center gap-3">
-        <h2 className="text-lg font-semibold text-wrap-balance">
-          Recent Diagrams
-        </h2>
-        <div className="flex gap-1 rounded-lg bg-muted p-0.5 text-xs">
-          <button
-            type="button"
-            onClick={() => setSort("modified")}
-            className={cn(
-              "rounded-md px-2 py-1 transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              sort === "modified"
-                ? "bg-background font-medium shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Last Modified
-          </button>
-          <button
-            type="button"
-            onClick={() => setSort("name")}
-            className={cn(
-              "rounded-md px-2 py-1 transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              sort === "name"
-                ? "bg-background font-medium shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Name
-          </button>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-wrap-balance">
+            Recent Diagrams
+          </h2>
+          <div className="flex gap-1 rounded-lg bg-muted p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => setSort("modified")}
+              className={cn(
+                "rounded-md px-2 py-1 transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                sort === "modified"
+                  ? "bg-background font-medium shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Last Modified
+            </button>
+            <button
+              type="button"
+              onClick={() => setSort("name")}
+              className={cn(
+                "rounded-md px-2 py-1 transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                sort === "name"
+                  ? "bg-background font-medium shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Name
+            </button>
+          </div>
         </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() =>
+            document.dispatchEvent(new Event("open-command-palette"))
+          }
+        >
+          <IconSearch className="size-3.5" />
+        </Button>
       </div>
 
       {files.length === 0 ? (
