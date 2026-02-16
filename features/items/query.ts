@@ -88,10 +88,6 @@ export function useCreateItemMutation() {
         queryClient.setQueryData<FileTreeRow[]>(itemKeys.list(), (old) =>
           old ? [...old, tempRow] : [tempRow],
         );
-        // Pre-populate content cache so navigation works immediately
-        if (!isFolder) {
-          queryClient.setQueryData(itemKeys.content(tempId), { content: "" });
-        }
       }
 
       return { previous, tempId };
@@ -103,28 +99,10 @@ export function useCreateItemMutation() {
           item.id === context?.tempId ? realItem : item,
         ),
       );
-      // Transfer content cache from temp ID to real ID
-      if (context?.tempId) {
-        const cached = queryClient.getQueryData(
-          itemKeys.content(context.tempId),
-        );
-        queryClient.setQueryData(
-          itemKeys.content(realItem.id),
-          cached ?? { content: "" },
-        );
-        queryClient.removeQueries({
-          queryKey: itemKeys.content(context.tempId),
-        });
-      }
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(itemKeys.list(), context.previous);
-      }
-      if (context?.tempId) {
-        queryClient.removeQueries({
-          queryKey: itemKeys.content(context.tempId),
-        });
       }
       toast.error("Failed to create item");
     },
