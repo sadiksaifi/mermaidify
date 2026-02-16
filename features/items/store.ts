@@ -44,7 +44,7 @@ function computeItems(
 // Mutation function signatures matching TanStack Query's .mutate()
 interface Mutations {
   createItem: (
-    input: { parentId: string | null; name: string; isFolder: boolean },
+    input: { parentId: string | null; name: string; isFolder: boolean; tempId?: string },
     options?: {
       onSuccess?: (dbItem: FileTreeRow) => void;
       onError?: () => void;
@@ -309,56 +309,48 @@ export function createFileTreeStore() {
 
       const isFolder = pending.type === "folder";
 
-      // Remove from creatingIds
+      // Remove pending item eagerly — the TQ onMutate will add a temp row
+      // with the same ID, so there's no visual gap
       set((state) => {
+        const newPending = state.pendingItems.filter((p) => p.id !== id);
         const newCreatingIds = new Set(state.creatingIds);
         newCreatingIds.delete(id);
         return {
+          pendingItems: newPending,
           renamingId: state.renamingId === id ? null : state.renamingId,
           creatingIds: newCreatingIds,
         };
       });
 
-      // Fire the mutation
+      // Fire the mutation with tempId so optimistic update reuses same ID
       get()._mutations?.createItem(
-        { parentId: pending.parentId, name, isFolder },
+        { parentId: pending.parentId, name, isFolder, tempId: id },
         {
           onSuccess: (dbItem) => {
             set((state) => {
-              const newPending = state.pendingItems.filter(
-                (p) => p.id !== id
-              );
+              // Swap temp ID → real ID in UI state
+              const swapId = (sid: string) => (sid === id ? dbItem.id : sid);
               const newSelectedIds = state.selectedIds.has(id)
-                ? new Set([...state.selectedIds].map((sid) => sid === id ? dbItem.id : sid))
+                ? new Set([...state.selectedIds].map(swapId))
                 : state.selectedIds;
               return {
-                pendingItems: newPending,
-                items: computeItems(state._rows, newPending),
+                items: computeItems(state._rows, state.pendingItems),
                 renamingId:
                   state.renamingId === id ? dbItem.id : state.renamingId,
                 selectedId:
                   state.selectedId === id ? dbItem.id : state.selectedId,
                 selectedIds: newSelectedIds,
                 expandedIds: state.expandedIds.has(id)
-                  ? new Set(
-                      [...state.expandedIds].map((eid) =>
-                        eid === id ? dbItem.id : eid
-                      )
-                    )
+                  ? new Set([...state.expandedIds].map(swapId))
                   : state.expandedIds,
               };
             });
           },
           onError: () => {
-            set((state) => {
-              const newPending = state.pendingItems.filter(
-                (p) => p.id !== id
-              );
-              return {
-                pendingItems: newPending,
-                items: computeItems(state._rows, newPending),
-              };
-            });
+            // TQ onError already rolls back the list cache
+            set((state) => ({
+              items: computeItems(state._rows, state.pendingItems),
+            }));
           },
         }
       );

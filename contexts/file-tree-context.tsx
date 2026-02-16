@@ -36,7 +36,8 @@ export function FileTreeProvider({ children }: { children: React.ReactNode }) {
   // Sync mutation functions into the store
   React.useEffect(() => {
     store.getState()._syncMutations({
-      createItem: (input, options) => createItemMutation.mutate(input, options),
+      createItem: ({ tempId, ...rest }, options) =>
+        createItemMutation.mutate({ ...rest, tempId }, options),
       renameItem: (input) => renameItemMutation.mutate(input),
       moveItem: (input) => moveItemMutation.mutate(input),
       deleteItem: (id) => deleteItemMutation.mutate(id),

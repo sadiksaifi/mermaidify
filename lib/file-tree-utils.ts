@@ -155,6 +155,25 @@ export function getParentIds(
 }
 
 /**
+ * Generate a unique "copy" name given the original name and a list of sibling names.
+ * Mirrors the server-side logic in features/items/api.ts.
+ */
+export function generateCopyName(
+  originalName: string,
+  siblingNames: string[],
+): string {
+  const stem = originalName.replace(/\.mmd$/, "");
+  const nameSet = new Set(siblingNames);
+  let copyName = `${stem} copy.mmd`;
+  let counter = 2;
+  while (nameSet.has(copyName)) {
+    copyName = `${stem} copy ${counter}.mmd`;
+    counter++;
+  }
+  return copyName;
+}
+
+/**
  * Build a nested tree from a flat list of DB rows.
  * Rows should be sorted: folders first, then alphabetical by name.
  */
