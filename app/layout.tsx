@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/components/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { siteConfig } from "@/lib/site-config";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -19,8 +20,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mermaidify",
-  description: "A Notion-like file viewer",
+  title: siteConfig.title,
+  description: siteConfig.description,
+  keywords: [...siteConfig.keywords],
+  authors: [siteConfig.author],
+  creator: siteConfig.creator,
+  metadataBase: new URL(siteConfig.url),
+  openGraph: {
+    ...siteConfig.openGraph,
+    title: siteConfig.title,
+    description: siteConfig.description,
+    url: siteConfig.url,
+  },
+  twitter: {
+    ...siteConfig.twitter,
+    title: siteConfig.title.default,
+    description: siteConfig.description,
+  },
 };
 
 export default function RootLayout({
